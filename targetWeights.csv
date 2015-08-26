@@ -1,0 +1,24 @@
+name,species,diet,gut,order,weight
+Gazelle2,Gazella spekei (maybe?),H,FG,Artiodactyla,20
+Okapi1,Okapia johnsoni,H,FG,Artiodactyla,300
+BlackRhino1,Diceros bicornis,H,HG,Perissodactyla,1100
+BigHornW3,Ovis canadensis,H,FG,Artiodactyla,100
+Kroo1,Macropus rufus,H,FG,Diprotodontia,60
+SpgbkW,Antidorcas marsupialis,H,FG,Artiodactyla,40
+Rabbit,Oryctolagus cuniculus,H,HG,Lagomorpha,2
+HyraxSTL,Procavia capensis,H,FG,Hyracoidea,4
+BaboonW,Papio hamadryas,O,S,Primates,20
+Kroo3,Macropus rufus,H,FG,Diprotodontia,60
+Zebra2,Equus greyvi,H,HG,Perissodactyla,400
+Gazelle3,Gazella spekei,H,FG,Artiodactyla,20
+Armadillo,Tolypeutes matacus,C,S,Xenartha,5
+BigHornSD,Ovis canadensis,H,FG,Artiodactyla,100
+Wildass1,Equus africanus,H,HG,Perissodactyla,250
+AfElphSD3,Loxondonta africana,H,HG,Proboscidae,5000
+Okapi3,Okapia johnsoni,H,FG,Artiodactyla,300
+ZebraSTL1,Equus grebyi,H,HG,Perissodactyla,400
+Callimicos,Callimico goeldii,O,S,Primates,.5
+BlackRhino2,Diceros bicornis,H,HG,Perissodactyla,1100
+Orang1,Pongo pygmaeus,H,HG,Primates,55
+Okapi2,Okapia johnsoni,H,FG,Artiodactyla,300
+

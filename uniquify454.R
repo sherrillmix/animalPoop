@@ -24,7 +24,7 @@ seqs<-seqs[selector,]
 #message('Throwing out ',sum(!selector),' poor quality sequences (',sum(selector),' remaining)')
 #seqs<-seqs[selector,]
 seqCounts<-tapply(seqs$seq,seqs$seq,length)
-out<-data.frame('seq'=names(seqCounts),'count'=seqCounts)
+out<-data.frame('seq'=names(seqCounts),'count'=seqCounts,stringsAsFactors=FALSE)
 out$hash<-sapply(out$seq,digest,'sha1')
 out$name<-sprintf('%s_%d',substring(out$hash,1,20),out$count)
 

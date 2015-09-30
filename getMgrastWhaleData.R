@@ -1,6 +1,6 @@
 ##File name: getMgrastData.R
 ##Creation date: Aug 27, 2015
-##Last modified: Thu Aug 27, 2015  10:00AM
+##Last modified: Tue Sep 29, 2015  07:00AM
 ##Created by: scott
 ##Summary: Download Whale data from MGRAST. More difficult that it should be
 
@@ -29,7 +29,8 @@ for(ii in projectIds){
 			message('    ',jj,' is WGS. Skipping')
 			next()
 		}
-		outPath<-sprintf('data/mgrast/%s.fa.gz',jj)
+		#outPath<-sprintf('data/mgrast/%s.fa.gz',jj)
+		outPath<-sprintf('data/mgrast/%s.fastq.gz',jj)
 		if(!file.exists(outPath)){
 			message('    Downloading file')
 			fasta<-readLines(sampleUrls[jj])

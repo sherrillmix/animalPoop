@@ -1,9 +1,3 @@
-#File name: uniquify.R
-##Creation date: Aug 25, 2015
-##Last modified: Tue Sep 08, 2015  07:00AM
-##Created by: scott
-##Summary: Take fasta and return fasta with unique reads and counts
-
 library('digest')
 source("~/scripts/R/dna.R")
 

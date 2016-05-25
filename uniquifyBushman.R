@@ -1,9 +1,3 @@
-##File name: splitBushman.R
-##Creation date: Aug 31, 2015
-##Last modified: Tue Sep 01, 2015  07:00AM
-##Created by: scott
-##Summary: Uniqueft big file from Aubrey
-
 #actually this is a mix of data from all kinds of sequencing runs so I'll keep it together and break up after otus
 
 info<-read.csv('data/bushman/combined_mapping.txt')
@@ -25,7 +19,3 @@ out$name<-sprintf('%d_%d',out$seqId,out$count)
 write.fa(out$name,out$seq,'data/bushman/uniq.fa.gz')
 
 
-#for(ii in unique(dat$sample)){
-	#thisData<-dat[dat$sample==i,]
-	#write.fa(thisData$name,thisData$seq,)
-#}

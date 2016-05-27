@@ -1,5 +1,4 @@
-library("dnar")
-
+library("dnar") 
 args<-commandArgs(TRUE)
 input<-args[1]
 output<-args[2]
@@ -10,12 +9,12 @@ qualityCut<-as.numeric(args[5])
 if(is.null(input))stop(simpleError('Input undefined'))
 if(is.null(output))stop(simpleError('Output undefined'))
 if(is.na(minLength))minLength<-0
-if(is.na(maxLength))maxLength<-Inf
-if(is.na(qualityCut))qualityCut<-20
+if(is.na(maxLength))maxLength<-1e7
+if(is.na(qualityCut))qualityCut<-0
 isFastq<-grepl('\\.fastq',input)
 
 if(isFastq){
-	seqs<-read.fastq(input)
+	seqs<-read.fastq(input,convert=TRUE)
 }else{
 	seqs<-read.fa(input)
 }

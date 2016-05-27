@@ -1,7 +1,7 @@
 #!/bin/bash
 ##File name: swarmData.bash
 ##Creation date: Aug 24, 2015
-##Last modified: Fri May 27, 2016  12:00PM
+##Last modified: Fri May 27, 2016  03:00PM
 ##Created by: scott
 ##Summary: Swarm to make OTUs
 
@@ -10,7 +10,7 @@ cd data/anteater/
 echo Starting filtering
 for ii in *.fastq.gz;do 
 	echo $ii
-	echo Rscript ../../uniquify.R $ii ${ii%.fastq.gz}_uniq.fa #sem from apt-get install parallel 
+	sem -j8 Rscript ../../uniquify.R $ii ${ii%.fastq.gz}_uniq.fa #sem from apt-get install parallel 
 done
 sem --wait
 echo Done filtering

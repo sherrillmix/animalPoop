@@ -11,7 +11,7 @@ if(is.null(input))stop(simpleError('Input undefined'))
 if(is.null(output))stop(simpleError('Output undefined'))
 if(is.na(minLength))minLength<-0
 if(is.na(maxLength))maxLength<-Inf
-if(is.na(qualityCut))maxLength<-20
+if(is.na(qualityCut))qualityCut<-20
 isFastq<-grepl('\\.fastq',input)
 
 if(isFastq){

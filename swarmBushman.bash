@@ -1,24 +1,27 @@
 #!/bin/bash
 ##File name: swarmData.bash
 ##Creation date: Aug 24, 2015
-##Last modified: Tue Aug 25, 2015  10:00AM
+##Last modified: Fri May 27, 2016  10:00AM
 ##Created by: scott
 ##Summary: Swarm to make OTUs
 
-cd data/bushman
+cd data/bushman/split/
 
-if [ ! -f uniq.fa.gz ];then
-	echo "Finding unique reads in Bushman data"
-	Rscript ../../uniquifyBushman.R
-	echo "Done finding unique reads in Bushman data"
-fi
-
-gunzip uniq.fa.gz
+echo Starting filtering
+for ii in *.fa.gz;do 
+	echo $ii
+	sem -j8  Rscript ../../../uniquify.R $ii ${ii%.fa.gz}_uniq.fa 250 350 #sem from apt-get install parallel 
+done
+sem --wait
+echo Done filtering
 
 echo Starting swarm
-~/installs/swarm/swarm uniq.fa -o uniq.out
+for ii in *_uniq.fa;do 
+	echo $ii
+	sem -j8  ~/installs/swarm/swarm $ii -o ${ii%.fa}.out
+done
+sem --wait
 echo Done swarming
 
-gzip uniq.fa
 
 echo All done

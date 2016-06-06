@@ -15,4 +15,3 @@ runSwarm<-function(seqs,swarmBin='swarm',swarmArgs='-f'){
 	out<-otus[seqNames]
 	return(out)
 }
-runSwarm(c('AAA','AAA','ATA','TTT','AAA','CCC'),swarmBin='~/installs/swarm/swarm')

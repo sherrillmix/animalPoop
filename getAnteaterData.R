@@ -1,9 +1,3 @@
-##File name: getMgrastData.R
-##Creation date: Aug 27, 2015
-##Last modified: Fri Sep 04, 2015  02:00PM
-##Created by: scott
-##Summary: Download Muegge data from MGRAST. More difficult that it should be
-
 library(RCurl)
 library(XML)
 

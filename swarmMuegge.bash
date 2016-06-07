@@ -1,11 +1,11 @@
 #!/bin/bash
 ##File name: swarmData.bash
 ##Creation date: Aug 24, 2015
-##Last modified: Tue Aug 25, 2015  10:00AM
+##Last modified: Tue May 31, 2016  09:00AM
 ##Created by: scott
 ##Summary: Swarm to make OTUs
 
-cd data
+cd data/muegge
 
 echo Starting filtering
 for ii in *.fastq.gz;do 

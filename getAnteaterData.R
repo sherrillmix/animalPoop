@@ -24,9 +24,8 @@ allSeqs<-mclapply(info$target,function(x){
 tmp<-runSwarm(unlist(allSeqs),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t 32')
 otus<-tmp[['otus']]
 seqs<-tmp[['seqs']]
-samples<-rep(info$XXX,sapply(allSeqs,length))
-table(samples,otus)
+samples<-rep(info$file,sapply(allSeqs,length))
 dir.create('work/data/anteater',showWarnings=FALSE)
-write.fa(1:length(seqs),seqs,'work/data/anteater/swarmSeqs.fa')
+write.fa(1:length(seqs),seqs,'work/data/anteater/swarmSeqs.fa.gz')
 otuTab<-table(samples,otus)
 write.csv(otuTab,'work/data/anteater/otuTab.csv')

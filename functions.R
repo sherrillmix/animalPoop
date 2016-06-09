@@ -8,7 +8,6 @@ runSwarm<-function(seqs,swarmBin='swarm',swarmArgs='-f'){
 	seqFile<-tempfile()
 	uniqSelector<-!duplicated(seqs)
 	write.fa(seqNames[uniqSelector],seqs[uniqSelector],readFile)
-	browser()
 	cmd<-sprintf('%s %s %s -o %s -w %s',swarmBin,swarmArgs,readFile,outFile,seqFile)
 	system(cmd)
 	swarm<-readLines(outFile)

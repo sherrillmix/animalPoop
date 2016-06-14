@@ -1,19 +1,21 @@
 ##File name: getMgrastData.R
 ##Creation date: Aug 27, 2015
-##Last modified: Mon Jun 06, 2016  12:00PM
+##Last modified: Tue Jun 14, 2016  02:00PM
 ##Created by: scott
 ##Summary: Download Muegge data from MGRAST. More difficult that it should be
 
 library(RCurl)
 library(XML)
+library(parallel)
+source('functions.R')
+library(dnar)
 
 projectIds<-113:116
 #The awesome mg-rast javascript in the table so we cant scrape it. saving the pages manually
 #ftp://ftp.metagenomics.anl.gov/data/manual/mg-rast-manual.pdf
 #ftp://ftp.metagenomics.anl.gov/projects/README.ftp
 #http://metagenomics.anl.gov/metagenomics.cgi?page=MetagenomeProject&project=116
-#projectUrls<-sprintf('http://metagenomics.anl.gov/metagenomics.cgi?page=MetagenomeProject&project=%d',projectIds)
-
+#projectUrls<-sprintf('http://metagenomics.anl.gov/metagenomics.cgi?page=MetagenomeProject&project=%d',projectIds) 
 if(exists('info'))rm(info)
 for(ii in projectIds){
 	message('Project ',ii)
@@ -44,3 +46,22 @@ for(ii in projectIds){
 	}
 }
 write.csv(info,'data/mgrast/mgrastInfo.csv')
+
+info$file<-sprintf('data/mgrast/%s.fa.gz',info$MG.RAST.ID)
+isMeta<-grepl('MG$',info$Metagenome.Name)
+info<-info[!isMeta,]
+
+allSeqs<-mclapply(info$file,function(x){
+	tmp<-read.fa(x)
+	seqs<-filterReads(tmp$seq,minLength=150,maxLength=275)
+	return(seqs)
+},mc.cores=16)
+
+tmp<-runSwarm(unlist(allSeqs),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t 32')
+otus<-tmp[['otus']]
+seqs<-tmp[['seqs']]
+samples<-rep(info$file,sapply(allSeqs,length))
+dir.create('work/data/muegge',showWarnings=FALSE)
+write.fa(1:length(seqs),seqs,'work/data/muegge/swarmSeqs.fa.gz')
+otuTab<-table(samples,otus)
+write.csv(otuTab,'work/data/muegge/otuTab.csv')

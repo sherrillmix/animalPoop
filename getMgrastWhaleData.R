@@ -1,11 +1,14 @@
 ##File name: getMgrastData.R
 ##Creation date: Aug 27, 2015
-##Last modified: Mon Jun 06, 2016  12:00PM
+##Last modified: Tue Jun 14, 2016  03:00PM
 ##Created by: scott
 ##Summary: Download Whale data from MGRAST. More difficult that it should be
 
 library(RCurl)
 library(XML)
+library(parallel)
+source('functions.R')
+library(dnar)
 
 projectIds<-3854
 #The awesome mg-rast javascript in the table so we cant scrape it. saving the pages manually
@@ -50,3 +53,19 @@ for(ii in projectIds){
 	}
 }
 write.csv(info,'data/mgrast/mgrastWhaleInfo.csv')
+
+info$file<-sprintf('data/mgrast/%s.fastq.gz',info$MG.RAST.ID)
+allSeqs<-mclapply(info$file,function(x){
+	tmp<-read.fastq(x)
+	seqs<-filterReads(tmp$seq,minLength=250,maxLength=350,minQual=10,maxBadQual=3)
+	return(seqs)
+},mc.cores=16)
+
+tmp<-runSwarm(unlist(allSeqs),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t 32')
+otus<-tmp[['otus']]
+seqs<-tmp[['seqs']]
+samples<-rep(info$file,sapply(allSeqs,length))
+dir.create('work/data/whale',showWarnings=FALSE)
+write.fa(1:length(seqs),seqs,'work/data/whale/swarmSeqs.fa.gz')
+otuTab<-table(samples,otus)
+write.csv(otuTab,'work/data/whale/otuTab.csv')

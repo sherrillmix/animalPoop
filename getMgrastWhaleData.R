@@ -1,6 +1,6 @@
 ##File name: getMgrastData.R
 ##Creation date: Aug 27, 2015
-##Last modified: Tue Jun 14, 2016  03:00PM
+##Last modified: Mon Jul 11, 2016  10:00AM
 ##Created by: scott
 ##Summary: Download Whale data from MGRAST. More difficult that it should be
 
@@ -56,8 +56,8 @@ write.csv(info,'data/mgrast/mgrastWhaleInfo.csv')
 
 info$file<-sprintf('data/mgrast/%s.fastq.gz',info$MG.RAST.ID)
 allSeqs<-mclapply(info$file,function(x){
-	tmp<-read.fastq(x)
-	seqs<-filterReads(tmp$seq,minLength=250,maxLength=350,minQual=10,maxBadQual=3)
+	tmp<-read.fastq(x,convert=TRUE)
+	seqs<-filterReads(tmp$seq,tmp$qual,minLength=250,maxLength=350,minQual=10,maxBadQual=3)
 	return(seqs)
 },mc.cores=16)
 

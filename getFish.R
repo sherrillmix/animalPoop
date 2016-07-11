@@ -31,7 +31,7 @@ info$file<-sprintf('data/fish/%s.fastq',fish$srr)
 
 allSeqs<-mclapply(info$file,function(x){
 	tmp<-read.fastq(x,convert=TRUE)
-	seqs<-filterReads(tmp$seq,minLength=300,maxLength=375,minQual=10,maxBadQual=3)
+	seqs<-filterReads(tmp$seq,tmp$qualminLength=300,maxLength=375,minQual=10,maxBadQual=3)
 	return(seqs)
 },mc.cores=16)
 

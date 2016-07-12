@@ -20,6 +20,7 @@ firstLines<-sub('^[^ ]+ ([^.]+)\\..*$','\\1',firstLines)
 if(any(!desiredSamples %in% firstLines))stop(simpleError('Missing sample'))
 info$file<-sapply(info$name,function(x)names(firstLines)[firstLines==x])
 info<-merge(info[,c('name','file')],weights)
+dir.create('work/data/muegge',showWarnings=FALSE)
 write.csv(info,'work/data/muegge/info.csv')
 
 
@@ -33,7 +34,6 @@ tmp<-runSwarm(unlist(allSeqs),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t
 otus<-tmp[['otus']]
 seqs<-tmp[['seqs']]
 samples<-rep(info$file,sapply(allSeqs,length))
-dir.create('work/data/muegge',showWarnings=FALSE)
 write.fa(1:length(seqs),seqs,'work/data/muegge/swarmSeqs.fa.gz')
 otuTab<-table(samples,otus)
 write.csv(otuTab,'work/data/muegge/otuTab.csv')

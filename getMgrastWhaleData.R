@@ -1,6 +1,6 @@
 ##File name: getMgrastData.R
 ##Creation date: Aug 27, 2015
-##Last modified: Mon Jul 11, 2016  10:00AM
+##Last modified: Tue Jul 12, 2016  06:00AM
 ##Created by: scott
 ##Summary: Download Whale data from MGRAST. More difficult that it should be
 
@@ -52,9 +52,15 @@ for(ii in projectIds){
 		info<-rbind(info[,sharedCols],thisInfo[,sharedCols])
 	}
 }
-write.csv(info,'data/mgrast/mgrastWhaleInfo.csv')
-
 info$file<-sprintf('data/mgrast/%s.fastq.gz',info$MG.RAST.ID)
+weights<-read.csv('data/mgrast/mgrastWhaleWeights.csv',stringsAsFactors=FALSE) #rough estimates from wikipedia and http://marinebio.org/species.asp?id=192 and http://www.esf.edu/aec/adks/mammals/wtd.htm
+rownames(weights)<-weights$name
+info$animal<-sapply(strsplit(info$Metagenome.Name,'\\.'),'[[',1)
+info<-cbind(info,weights[info$animal,-1])
+
+dir.create('work/data/whale',showWarnings=FALSE)
+write.csv(info,'work/data/whale/info.csv')
+
 allSeqs<-mclapply(info$file,function(x){
 	tmp<-read.fastq(x,convert=TRUE)
 	seqs<-filterReads(tmp$seq,tmp$qual,minLength=250,maxLength=350,minQual=10,maxBadQual=3)
@@ -65,7 +71,6 @@ tmp<-runSwarm(unlist(allSeqs),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t
 otus<-tmp[['otus']]
 seqs<-tmp[['seqs']]
 samples<-rep(info$file,sapply(allSeqs,length))
-dir.create('work/data/whale',showWarnings=FALSE)
 write.fa(1:length(seqs),seqs,'work/data/whale/swarmSeqs.fa.gz')
 otuTab<-table(samples,otus)
 write.csv(otuTab,'work/data/whale/otuTab.csv')

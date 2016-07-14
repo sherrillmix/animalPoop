@@ -10,7 +10,12 @@ info$species<-sapply(sprintf(sampleUrl,info$sample_accession),function(address)s
 info$file<-basename(info$fastq_ftp)
 write.csv(info[,c('run_accession','species','file')],'data/anteater/info.csv',row.names=FALSE)
 info$target<-sprintf('data/anteater/%s',info$file)
+weight<-read.csv('data/anteater/weights.csv',stringsAsFactors=FALSE)
+rownames(weight)<-weight$species
+info$weight<-weight[info$species,'weight']
 
+dir.create('work/data/anteater',showWarnings=FALSE)
+write.csv(info[,c('file','species','weight')],'work/data/anteater/info.csv')
 
 #download files
 mapply(function(xx,yy)if(!file.exists(yy))download.file(sprintf('http://%s',xx),yy),info$fastq_ftp,info$target)
@@ -25,7 +30,6 @@ tmp<-runSwarm(unlist(allSeqs),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t
 otus<-tmp[['otus']]
 seqs<-tmp[['seqs']]
 samples<-rep(info$file,sapply(allSeqs,length))
-dir.create('work/data/anteater',showWarnings=FALSE)
 write.fa(1:length(seqs),seqs,'work/data/anteater/swarmSeqs.fa.gz')
 otuTab<-table(samples,otus)
 write.csv(otuTab,'work/data/anteater/otuTab.csv')

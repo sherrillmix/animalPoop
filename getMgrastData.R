@@ -1,6 +1,6 @@
 ##File name: getMgrastData.R
 ##Creation date: Aug 27, 2015
-##Last modified: Tue Jun 14, 2016  02:00PM
+##Last modified: Fri Jul 15, 2016  12:00PM
 ##Created by: scott
 ##Summary: Download Muegge data from MGRAST. More difficult that it should be
 
@@ -51,6 +51,14 @@ info$file<-sprintf('data/mgrast/%s.fa.gz',info$MG.RAST.ID)
 isMeta<-grepl('MG$',info$Metagenome.Name)
 info<-info[!isMeta,]
 
+dir.create('work/data/muegge',showWarnings=FALSE)
+weights<-read.csv('data/mgrast/mgrastWeights.csv',stringsAsFactors=FALSE) #rough estimates from wikipedia and  http://www.sciencemag.org/content/332/6032/970/suppl/DC1
+rownames(weights)<-weights$name
+info$name<-sub('\\..*$','',info$Metagenome.Name)
+info<-cbind(info,weights[info$name,-1])
+write.csv(info,'work/data/muegge/info.csv')
+
+
 allSeqs<-mclapply(info$file,function(x){
 	tmp<-read.fa(x)
 	seqs<-filterReads(tmp$seq,minLength=150,maxLength=275)
@@ -61,7 +69,6 @@ tmp<-runSwarm(unlist(allSeqs),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t
 otus<-tmp[['otus']]
 seqs<-tmp[['seqs']]
 samples<-rep(info$file,sapply(allSeqs,length))
-dir.create('work/data/muegge',showWarnings=FALSE)
 write.fa(1:length(seqs),seqs,'work/data/muegge/swarmSeqs.fa.gz')
 otuTab<-table(samples,otus)
 write.csv(otuTab,'work/data/muegge/otuTab.csv')

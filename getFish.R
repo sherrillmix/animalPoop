@@ -78,7 +78,7 @@ write.csv(info[,c('file','species','name','weight')],'work/data/fish/info.csv')
 
 allSeqs<-mclapply(info$file,function(x){
 	tmp<-read.fastq(x,convert=TRUE)
-	seqs<-filterReads(tmp$seq,tmp$qualminLength=300,maxLength=375,minQual=10,maxBadQual=3)
+	seqs<-filterReads(tmp$seq,tmp$qual,minLength=300,maxLength=375,minQual=10,maxBadQual=3)
 	return(seqs)
 },mc.cores=16)
 

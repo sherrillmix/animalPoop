@@ -18,9 +18,9 @@ animalWeights<-c(
 	'RIGHT'=55000
 )
 info$weight<-animalWeights[info$species]
-info$file<-info$sample
+info$name<-info$sample
 dir.create('work/data/bushman',showWarnings=FALSE)
-write.csv(info[,c('sample','file','species','weight')],'work/data/bushman/info.csv')
+write.csv(info[,c('sample','name','species','weight')],'work/data/bushman/info.csv')
 
 seqs<-read.fa('data/bushman/raw/seqs.fna.gz',assumeSingleLine=TRUE)
 seqs$sample<-sub('_[0-9].*','',seqs$name)

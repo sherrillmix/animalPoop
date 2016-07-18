@@ -15,7 +15,8 @@ rownames(weight)<-weight$species
 info$weight<-weight[info$species,'weight']
 
 dir.create('work/data/anteater',showWarnings=FALSE)
-write.csv(info[,c('file','species','weight')],'work/data/anteater/info.csv')
+info$name<-info$file
+write.csv(info[,c('name','species','weight')],'work/data/anteater/info.csv')
 
 #download files
 mapply(function(xx,yy)if(!file.exists(yy))download.file(sprintf('http://%s',xx),yy),info$fastq_ftp,info$target)

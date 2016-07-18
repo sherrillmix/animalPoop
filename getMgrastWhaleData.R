@@ -1,6 +1,6 @@
 ##File name: getMgrastData.R
 ##Creation date: Aug 27, 2015
-##Last modified: Tue Jul 12, 2016  06:00AM
+##Last modified: Sun Jul 17, 2016  11:00PM
 ##Created by: scott
 ##Summary: Download Whale data from MGRAST. More difficult that it should be
 
@@ -59,6 +59,7 @@ info$animal<-sapply(strsplit(info$Metagenome.Name,'\\.'),'[[',1)
 info<-cbind(info,weights[info$animal,-1])
 
 dir.create('work/data/whale',showWarnings=FALSE)
+info$name<-info$file
 write.csv(info,'work/data/whale/info.csv')
 
 allSeqs<-mclapply(info$file,function(x){

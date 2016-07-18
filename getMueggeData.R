@@ -21,8 +21,9 @@ if(any(!desiredSamples %in% firstLines))stop(simpleError('Missing sample'))
 info$file<-sapply(info$name,function(x)names(firstLines)[firstLines==x])
 info<-merge(info[,c('name','file')],weights)
 dir.create('work/data/mueggeIllumina',showWarnings=FALSE)
+info$common<-info$name
+info$name<-info$file
 write.csv(info,'work/data/mueggeIllumina/info.csv')
-
 
 allSeqs<-mclapply(info$file,function(x){
 	tmp<-read.fastq(x,convert=TRUE)

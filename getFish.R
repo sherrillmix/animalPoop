@@ -73,8 +73,9 @@ write.csv(info,'data/fish/sampleInfo.csv',row.names=FALSE)
 info$file<-sprintf('data/fish/%s.fastq',info$srr)
 
 dir.create('work/data/fish',showWarnings=FALSE)
-write.csv(info[,c('file','species','name','weight')],'work/data/fish/info.csv')
-
+info$common<-info$name
+info$name<-info$file
+write.csv(info[,c('name','species','common','weight')],'work/data/fish/info.csv')
 
 allSeqs<-mclapply(info$file,function(x){
 	tmp<-read.fastq(x,convert=TRUE)

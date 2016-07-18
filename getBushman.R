@@ -20,6 +20,8 @@ animalWeights<-c(
 info$weight<-animalWeights[info$species]
 info$name<-info$sample
 dir.create('work/data/bushman',showWarnings=FALSE)
+info<-info[!is.na(info$species),]
+info<-info[!grepl('baby',info$species),]
 write.csv(info[,c('sample','name','species','weight')],'work/data/bushman/info.csv')
 
 seqs<-read.fa('data/bushman/raw/seqs.fna.gz',assumeSingleLine=TRUE)

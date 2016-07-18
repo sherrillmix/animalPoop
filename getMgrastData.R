@@ -1,9 +1,3 @@
-##File name: getMgrastData.R
-##Creation date: Aug 27, 2015
-##Last modified: Fri Jul 15, 2016  12:00PM
-##Created by: scott
-##Summary: Download Muegge data from MGRAST. More difficult that it should be
-
 library(RCurl)
 library(XML)
 library(parallel)
@@ -45,6 +39,7 @@ for(ii in projectIds){
 		info<-rbind(info[,sharedCols],thisInfo[,sharedCols])
 	}
 }
+info<-info[!duplicated(info$MG.RAST.ID),]
 write.csv(info,'data/mgrast/mgrastInfo.csv')
 
 info$file<-sprintf('data/mgrast/%s.fa.gz',info$MG.RAST.ID)
@@ -56,8 +51,9 @@ weights<-read.csv('data/mgrast/mgrastWeights.csv',stringsAsFactors=FALSE) #rough
 rownames(weights)<-weights$name
 info$name<-sub('\\..*$','',info$Metagenome.Name)
 info<-cbind(info,weights[info$name,-1])
+info$common<-info$name
+info$name<-info$file
 write.csv(info,'work/data/muegge/info.csv')
-
 
 allSeqs<-mclapply(info$file,function(x){
 	tmp<-read.fa(x)

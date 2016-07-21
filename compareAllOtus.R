@@ -32,13 +32,21 @@ for(ii in unique(info$study)){
 }
 dev.off()
 
-
 pdf('out/mean.pdf',width=8,height=6)
 par(mfrow=c(2,3))
+xlim<-range(info$weight)
 for(ii in unique(info$study)){
 	thisData<-unique(info[info$study==ii,c('weight','aveRare','species')])
-	plot(thisData$weight,thisData$aveRare,log='xy',main=ii,xlab='Weight',ylab='Species')
+	plot(thisData$weight,thisData$aveRare,log='xy',main=ii,xlab='Weight',ylab='Species',xlim=xlim)
 	text(thisData$weight,thisData$aveRare,thisData$species,cex=.5,col='#00000044')
+	lRare<-log(thisData$aveRare)
+	lWeight<-log(thisData$weight)
+	mod<-lm(lRare~lWeight)
+	fakeWeights<-exp(-15:15)
+	coef<-mod$coefficients
+	pred<-exp(predict(mod,data.frame('lWeight'=log(fakeWeights))))
+	#pred2<-exp(log(fakeWeights)*coef['lWeight']+coef['(Intercept)'])
+	lines(fakeWeights,pred,col='#FF000088',lty=2)
 }
 dev.off()
 

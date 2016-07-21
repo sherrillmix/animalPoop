@@ -28,6 +28,7 @@ info<-info[,c('sample','species')]
 additional<-read.csv('data/bushman/raw/macaqueRat.csv',stringsAsFactors=FALSE)
 additional$species[grepl('wild.[rR]at',additional$sample)]<-'wild rat'
 additional$species[additional$species=='Macaca mulatta']<-'macaque'
+additional<-additional[additional$name!='Day14.JK54.feces.JK54',] #not sequenced apparently
 info<-rbind(info,additional)
 
 info$weight<-animalWeights[info$species]

@@ -37,7 +37,7 @@ par(mfrow=c(2,3))
 xlim<-range(info$weight)
 for(ii in unique(info$study)){
 	thisData<-unique(info[info$study==ii,c('weight','aveRare','species')])
-	plot(thisData$weight,thisData$aveRare,log='xy',main=ii,xlab='Weight',ylab='Species',xlim=xlim)
+	plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight',ylab='Species',xlim=xlim)
 	text(thisData$weight,thisData$aveRare,thisData$species,cex=.5,col='#00000044')
 	lRare<-log(thisData$aveRare)
 	lWeight<-log(thisData$weight)
@@ -45,8 +45,13 @@ for(ii in unique(info$study)){
 	fakeWeights<-exp(-15:15)
 	coef<-mod$coefficients
 	pred<-exp(predict(mod,data.frame('lWeight'=log(fakeWeights))))
+	ci<-predict(mod,data.frame('lWeight'=log(fakeWeights)),interval='conf')[,c('lwr','upr')]
 	#pred2<-exp(log(fakeWeights)*coef['lWeight']+coef['(Intercept)'])
+	polygon(c(fakeWeights,rev(fakeWeights)),exp(c(ci[,'lwr'],rev(ci[,'upr']))),border=NA,col='#FF000033')
 	lines(fakeWeights,pred,col='#FF000088',lty=2)
+	p<-coef(summary(mod))['lWeight','Pr(>|t|)']
+	beta<-coef(mod)['lWeight']
+	title(main=sprintf('%s\nr2=%.02f p=%.03f B=%.02f',ii,summary(mod)$r.squared,p,beta))
 }
 dev.off()
 

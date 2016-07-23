@@ -1,3 +1,4 @@
+library(dnar)
 dataDir<-'work/data/'
 studies<-list.files(dataDir)
 tmp<-lapply(paste(dataDir,studies,sep='/','info.csv'),read.csv,stringsAsFactors=FALSE)
@@ -56,3 +57,12 @@ for(ii in unique(info$study)){
 dev.off()
 
 
+pdf('out/heat.pdf',width=20,height=20)
+par(mfrow=c(2,3))
+for(ii in unique(info$study)){
+	message(ii)
+	thisOtus<-otus[[ii]][,apply(otus[[ii]],2,sum)>10]
+	thisOtus<-as.matrix(log(thisOtus+1))
+	heatmap(thisOtus,col=rev(heat.colors(100)),main=ii)
+}
+dev.off()

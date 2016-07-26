@@ -87,7 +87,9 @@ cbind(table(info$barcodeF,info$run),table(seqs$bar,seqs$file))
 seqs<-seqs[paste(seqs$file,seqs$bar) %in% paste(info$file,info$barcodeF),]
 seqs$primer<-substring(seqs$seq,15,ifelse(seqs$forward,34,33))
 seqs<-seqs[seqs$primer %in% c(info$primerFSeq,info$primerRSeq),]
-seqs$trim<-substring(seqs$seq,ifelse(seqs$forward,34,33)+1)
+#lots of reads end in N
+seqs$trim<-sub('N.*$','',substring(seqs$seq,ifelse(seqs$forward,34,33)+1))
+seqs<-seqs[nchar(seqs$trim)>200&nchar(seqs$trim<600),]
 
 rownames(info)<-paste(info$barcodeF,info$file)
 seqs$sample<-info[paste(seqs$bar,seqs$file),'sample_run']

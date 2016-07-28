@@ -1,4 +1,6 @@
 library(dnar)
+library(parallel)
+
 dataDir<-'work/data/'
 studies<-list.files(dataDir)
 tmp<-lapply(paste(dataDir,studies,sep='/','info.csv'),read.csv,stringsAsFactors=FALSE)
@@ -7,7 +9,7 @@ info<-do.call(rbind,lapply(tmp,function(x)x[,c('name','species','weight','study'
 rownames(info)<-info$name
 
 if(!exists('otus')){
-	otus<-lapply(paste(dataDir,studies,sep='/','otuTab.csv'),read.csv,row.names=1)
+	otus<-mclapply(paste(dataDir,studies,sep='/','otuTab.csv'),read.csv,row.names=1,mc.cores=8)
 	names(otus)<-studies
 	if(any(mapply(function(x,y)any(!y%in%rownames(x)),otus,split(info$name,info$study))))stop(simpleError('Mismatch between info and OTUs'))
 }

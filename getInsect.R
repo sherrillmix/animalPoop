@@ -66,7 +66,6 @@ if(!exists('allSeqs')){
 fileOrder<-sort(list.files('data/bug','fastq.gz$'))
 info$file<-fileOrder[as.numeric(info$run)]
 
-dir.create('work/data/bug',showWarnings=FALSE)
 info$name<-info$sample_run
 info$species<-sub('[ \n]*\\(.*$','',bugs[info$sample,'name'])
 info$order<-bugs[info$sample,'order']
@@ -76,7 +75,6 @@ info$growth<-bugs[info$sample,'growth']
 info$weight<-sapply(strsplit(bugs[info$sample,'length'],'[~-]'),function(x)mean(as.numeric(x))) #CAREFUL THIS IS LENGTH NOT WEIGHT
 info<-info[info$growth=='adult',]
 
-write.csv(info[,c('name','species','diet','habitat','weight')],'work/data/bug/info.csv')
 
 #not sure why TCAG on last run but looks like not a match anyway
 seqs<-allSeqs[allSeqs$key=='GACT',]
@@ -92,13 +90,30 @@ seqs$trim<-sub('N.*$','',substring(seqs$seq,ifelse(seqs$forward,34,33)+1))
 seqs<-seqs[nchar(seqs$trim)>200&nchar(seqs$trim<600),]
 
 rownames(info)<-paste(info$barcodeF,info$file)
-seqs$sample<-info[paste(seqs$bar,seqs$file),'sample_run']
+seqs$sample<-sprintf('%s%s',info[paste(seqs$bar,seqs$file),'sample_run'],ifelse(seqs$forward,'','_rev'))
 
-tmp<-runSwarm(unlist(seqs$trim),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t 32')
+
+dir.create('work/data/bug',showWarnings=FALSE)
+dir.create('work/data/bugRev',showWarnings=FALSE)
+out<-info[info$name %in% seqs$sample,]
+write.csv(out[,c('name','species','diet','habitat','weight')],'work/data/bug/info.csv')
+out<-info
+out$name<-sprintf('%s_rev',out$name)
+out<-out[out$name %in% seqs$sample,]
+write.csv(out[,c('name','species','diet','habitat','weight')],'work/data/bugRev/info.csv')
+
+
+tmp<-runSwarm(unlist(seqs$trim[seqs$forward]),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t 32')
 otus<-tmp[['otus']]
 otuSeqs<-tmp[['seqs']]
 write.fa(1:length(otuSeqs),otuSeqs,'work/data/bug/swarmSeqs.fa.gz')
-otuTab<-table(seqs$sample,otus)
+otuTab<-table(seqs$sample[seqs$forward],otus)
 write.csv(otuTab,'work/data/bug/otuTab.csv')
 
+tmp<-runSwarm(unlist(seqs$trim[!seqs$forward]),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t 32')
+otus<-tmp[['otus']]
+otuSeqs<-tmp[['seqs']]
+write.fa(1:length(otuSeqs),otuSeqs,'work/data/bugRev/swarmSeqs.fa.gz')
+otuTab<-table(seqs$sample[!seqs$forward],otus)
+write.csv(otuTab,'work/data/bugRev/otuTab.csv')
 

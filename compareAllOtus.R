@@ -16,7 +16,7 @@ if(!exists('otus')){
 
 rares<-mapply(function(otu,targets){
 	ns<-apply(otu[targets,],1,sum)
-	cut<-floor(quantile(ns,.1)*.9)
+	cut<-max(200,floor(quantile(ns,.1)*.9))
 	rares<-apply(otu[targets,],1,rareEquation,samples=floor(cut*.5))
 	rares[ns<cut]<-NA	
 	return(rares)
@@ -26,8 +26,8 @@ rares<-structure(unlist(rares),.Names=unlist(lapply(rares,names)))
 
 info$rare<-rares[info$name]
 info$aveRare<-ave(info$rare,info$species,info$study,FUN=function(x)mean(x,na.rm=TRUE))
-pdf('out/raw.pdf',width=8,height=6)
-par(mfrow=c(2,3))
+pdf('out/raw.pdf',width=8,height=9)
+par(mfrow=c(3,3))
 for(ii in unique(info$study)){
 	thisData<-info[info$study==ii,]
 	plot(thisData$weight,thisData$rare,log='xy',main=ii,xlab='Weight',ylab='Species')
@@ -35,8 +35,8 @@ for(ii in unique(info$study)){
 }
 dev.off()
 
-pdf('out/mean.pdf',width=8,height=6)
-par(mfrow=c(2,3))
+pdf('out/mean.pdf',width=8,height=9)
+par(mfrow=c(3,3))
 xlim<-range(info$weight)
 for(ii in unique(info$study)){
 	thisData<-unique(info[info$study==ii,c('weight','aveRare','species')])
@@ -59,12 +59,14 @@ for(ii in unique(info$study)){
 dev.off()
 
 
-pdf('out/heat.pdf',width=20,height=20)
-par(mfrow=c(2,3))
-for(ii in unique(info$study)){
+otuProps<-lapply(otus,function(x)t(apply(x,1,function(x)x/sum(x))))
+mclapply(unique(info$study),function(ii){
 	message(ii)
-	thisOtus<-otus[[ii]][,apply(otus[[ii]],2,sum)>10]
+	pdf(sprintf('out/heat/%s.pdf',ii),height=20,width=20)
+	thisOtus<-otuProps[[ii]][,apply(otuProps[[ii]],2,max)>.01]
 	thisOtus<-as.matrix(log(thisOtus+1))
-	heatmap(thisOtus,col=rev(heat.colors(100)),main=ii)
-}
-dev.off()
+	rownames(thisOtus)<-info[rownames(thisOtus),'species']
+	heatmap(thisOtus,col=rev(heat.colors(100)),main=ii,scale='column')
+	dev.off()
+	message('Done ',ii)
+},mc.cores=10)

@@ -40,8 +40,6 @@ par(mfrow=c(3,3))
 xlim<-range(info$weight)
 for(ii in unique(info$study)){
   thisData<-unique(info[info$study==ii,c('weight','aveRare','species')])
-  #bugs are lengths so try cubing for weight
-  if(grepl('bug',ii))thisData$weight<-thisData$weight^3/1e3
   plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight',ylab='Species',xlim=xlim)
   text(thisData$weight,thisData$aveRare,thisData$species,cex=.5,col='#00000044')
   lRare<-log(thisData$aveRare)

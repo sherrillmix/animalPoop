@@ -63,16 +63,19 @@ if(!exists('allSeqs')){
 
 
 #it looks like the files goes in order with 616204 and 616205 duplicated?
+#this is correct per follow up email
 fileOrder<-sort(list.files('data/bug','fastq.gz$'))
 info$file<-fileOrder[as.numeric(info$run)]
 
-info$name<-info$sample_run
+info$name<-info$sample
 info$species<-sub('[ \n]*\\(.*$','',bugs[info$sample,'name'])
 info$order<-bugs[info$sample,'order']
 info$diet<-bugs[info$sample,'diet']
 info$habitat<-bugs[info$sample,'habitat']
 info$growth<-bugs[info$sample,'growth']
-info$weight<-sapply(strsplit(bugs[info$sample,'length'],'[~-]'),function(x)mean(as.numeric(x))) #CAREFUL THIS IS LENGTH NOT WEIGHT
+info$length<-sapply(strsplit(bugs[info$sample,'length'],'[~-]'),function(x)mean(as.numeric(x))) #CAREFUL THIS IS LENGTH NOT WEIGHT
+#http://www.jstor.org/stable/3544943
+info$weight<-.0305*info$length^2.62/.3
 info<-info[info$growth=='adult',]
 
 
@@ -90,17 +93,19 @@ seqs$trim<-sub('N.*$','',substring(seqs$seq,ifelse(seqs$forward,34,33)+1))
 seqs<-seqs[nchar(seqs$trim)>200&nchar(seqs$trim<600),]
 
 rownames(info)<-paste(info$barcodeF,info$file)
-seqs$sample<-sprintf('%s%s',info[paste(seqs$bar,seqs$file),'sample_run'],ifelse(seqs$forward,'','_rev'))
+seqs$sample<-sprintf('%s%s',info[paste(seqs$bar,seqs$file),'sample'],ifelse(seqs$forward,'','_rev'))
 
 
 dir.create('work/data/bug',showWarnings=FALSE)
 dir.create('work/data/bugRev',showWarnings=FALSE)
-out<-info[info$name %in% seqs$sample,]
-write.csv(out[,c('name','species','diet','habitat','weight')],'work/data/bug/info.csv')
+targetCols<-c('name','species','diet','habitat','weight')
+#pool all duplicated sequencing into single sample
+out<-info[info$name %in% seqs$sample & !duplicated(info[,targetCols]),]
+write.csv(out[,targetCols],'work/data/bug/info.csv')
 out<-info
 out$name<-sprintf('%s_rev',out$name)
-out<-out[out$name %in% seqs$sample,]
-write.csv(out[,c('name','species','diet','habitat','weight')],'work/data/bugRev/info.csv')
+out<-out[out$name %in% seqs$sample & !duplicated(info[,targetCols]),]
+write.csv(out[,targetCols],'work/data/bugRev/info.csv')
 
 
 tmp<-runSwarm(unlist(seqs$trim[seqs$forward]),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t 32')

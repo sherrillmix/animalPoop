@@ -14,18 +14,22 @@ if(!exists('otus')){
   if(any(mapply(function(x,y)any(!y%in%rownames(x)),otus,split(info$name,info$study))))stop(simpleError('Mismatch between info and OTUs'))
 }
 
-rares<-mapply(function(otu,targets){
+calcRares<-function(otu,targets,cut=max(200,floor(quantile(ns,.1)*.9))){
   ns<-apply(otu[targets,],1,sum)
-  cut<-max(200,floor(quantile(ns,.1)*.9))
   rares<-apply(otu[targets,],1,rareEquation,samples=floor(cut*.5))
   rares[ns<cut]<-NA  
   return(rares)
-},otus,split(info$name,info$study))
+}
+rares<-mapply(calcRares,otus,split(info$name,info$study))
 rares<-structure(unlist(rares),.Names=unlist(lapply(rares,names)))
 
+rareAll<-mapply(calcRares,otus,split(info$name,info$study),MoreArgs=list(cut=200))
+rareAll<-structure(unlist(rareAll),.Names=unlist(lapply(rareAll,names)))
 
 info$rare<-rares[info$name]
+info$rareAll<-rareAll[info$name]
 info$aveRare<-ave(info$rare,info$species,info$study,FUN=function(x)mean(x,na.rm=TRUE))
+info$aveRareAll<-ave(info$rareAll,info$species,info$study,FUN=function(x)mean(x,na.rm=TRUE))
 pdf('out/raw.pdf',width=8,height=9)
 par(mfrow=c(3,3))
 for(ii in unique(info$study)){
@@ -34,12 +38,16 @@ for(ii in unique(info$study)){
   text(thisData$weight,thisData$rare,thisData$species,cex=.5,col='#00000044')
 }
 dev.off()
-
 pdf('out/mean.pdf',width=8,height=9)
 par(mfrow=c(3,3))
 xlim<-range(info$weight)
-for(ii in unique(info$study)){
-  thisData<-unique(info[info$study==ii,c('weight','aveRare','species')])
+for(ii in c(unique(info$study),'all')){
+  if(ii=='all'){
+    thisData<-unique(info[,c('weight','aveRareAll','species')])
+    colnames(thisData)[colnames(thisData)=='aveRareAll']<-'aveRare'
+  } else {
+    thisData<-unique(info[info$study==ii,c('weight','aveRare','species')])
+  }
   plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight',ylab='Species',xlim=xlim)
   text(thisData$weight,thisData$aveRare,thisData$species,cex=.5,col='#00000044')
   lRare<-log(thisData$aveRare)
@@ -57,7 +65,6 @@ for(ii in unique(info$study)){
   title(main=sprintf('%s\nr2=%.02f p=%.03f B=%.02f',ii,summary(mod)$r.squared,p,beta))
 }
 dev.off()
-
 
 otuProps<-lapply(otus,function(x)t(apply(x,1,function(x)x/sum(x))))
 mclapply(unique(info$study),function(ii){

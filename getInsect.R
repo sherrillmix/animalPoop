@@ -75,7 +75,7 @@ info$habitat<-bugs[info$sample,'habitat']
 info$growth<-bugs[info$sample,'growth']
 info$length<-sapply(strsplit(bugs[info$sample,'length'],'[~-]'),function(x)mean(as.numeric(x))) #CAREFUL THIS IS LENGTH NOT WEIGHT
 #http://www.jstor.org/stable/3544943
-info$weight<-.0305*info$length^2.62/.3
+info$weight<-.0305*info$length^2.62/.3/1000^2
 info<-info[info$growth=='adult',]
 
 
@@ -106,7 +106,6 @@ out<-info
 out$name<-sprintf('%s_rev',out$name)
 out<-out[out$name %in% seqs$sample & !duplicated(info[,targetCols]),]
 write.csv(out[,targetCols],'work/data/bugRev/info.csv')
-
 
 tmp<-runSwarm(unlist(seqs$trim[seqs$forward]),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t 32')
 otus<-tmp[['otus']]

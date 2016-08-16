@@ -8,7 +8,7 @@ info<-read.table(textConnection(sub('^#','',readLines('data/bird/cP315.mapping.t
 info$weight<-as.numeric(ifelse(info$Weightg=='nr',NA,info$Weightg))
 info$sample<-info$SampleID
 info$species<-paste(info$AOU_genus,info$AOU_species)
-info$name<-sprintf('%s %s',info$species,ave(info$species,info$species,FUN=function(x)1:length(x)))
+info$name<-info$SampleID
 
 dir.create('work/data/bird',showWarnings=FALSE)
 write.csv(info[!is.na(info$weight),c('sample','species','name','weight')],'work/data/bird/info.csv')

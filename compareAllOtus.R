@@ -14,9 +14,9 @@ if(!exists('otus')){
   if(any(mapply(function(x,y)any(!y%in%rownames(x)),otus,split(info$name,info$study))))stop(simpleError('Mismatch between info and OTUs'))
 }
 
-calcRares<-function(otu,targets,cut=max(200,floor(quantile(ns,.1)*.9))){
+calcRares<-function(otu,targets,cut=max(200,floor(quantile(ns,.1)*.9)),...){
   ns<-apply(otu[targets,],1,sum)
-  rares<-apply(otu[targets,],1,rareEquation,samples=floor(cut*.5))
+  rares<-apply(otu[targets,],1,rareEquation,samples=floor(cut*.5),...)
   rares[ns<cut]<-NA  
   return(rares)
 }
@@ -25,6 +25,12 @@ rares<-structure(unlist(rares),.Names=unlist(lapply(rares,names)))
 
 rareAll<-mapply(calcRares,otus,split(info$name,info$study),MoreArgs=list(cut=200))
 rareAll<-structure(unlist(rareAll),.Names=unlist(lapply(rareAll,names)))
+
+minRareAll<-lapply(1:10,function(minObs){
+  rareAll<-mapply(calcRares,otus,split(info$name,info$study),MoreArgs=list(cut=200,minObs=minObs))
+  rareAll<-structure(unlist(rareAll),.Names=unlist(lapply(rareAll,names)))
+  return(rareAll)
+})
 
 info$rare<-rares[info$name]
 info$rareAll<-rareAll[info$name]

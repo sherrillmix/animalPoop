@@ -26,11 +26,11 @@ rares<-structure(unlist(rares),.Names=unlist(lapply(rares,names)))
 rareAll<-mapply(calcRares,otus,split(info$name,info$study),MoreArgs=list(cut=200))
 rareAll<-structure(unlist(rareAll),.Names=unlist(lapply(rareAll,names)))
 
-minRareAll<-lapply(1:10,function(minObs){
+minRareAll<-do.call(rbind,lapply(1:10,function(minObs){
   rareAll<-mapply(calcRares,otus,split(info$name,info$study),MoreArgs=list(cut=200,minObs=minObs))
   rareAll<-structure(unlist(rareAll),.Names=unlist(lapply(rareAll,names)))
   return(rareAll)
-})
+}))
 
 info$rare<-rares[info$name]
 info$rareAll<-rareAll[info$name]

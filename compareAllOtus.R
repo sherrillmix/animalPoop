@@ -30,11 +30,14 @@ rares<-structure(unlist(rares),.Names=unlist(lapply(rares,names)))
 rareAll<-mapply(calcRares,otus,split(info$name,info$study),MoreArgs=list(cut=200))
 rareAll<-structure(unlist(rareAll),.Names=unlist(lapply(rareAll,names)))
 
-minRareAll<-do.call(rbind,lapply(1:10,function(minObs){
+nCuts<-1:10
+minRareAll<-do.call(rbind,lapply(nCuts,function(minObs){
   rareAll<-mapply(calcRares,otus,split(info$name,info$study),MoreArgs=list(cut=200,minObs=minObs))
   rareAll<-structure(unlist(rareAll),.Names=unlist(lapply(rareAll,names)))
   return(rareAll)
 }))
+rownames(minRareAll)<-nCuts
+minRareAll<-minRareAll[,info$name]
 message('Done Calculating rarefaction')
 
 info$rare<-rares[info$name]
@@ -75,6 +78,17 @@ for(ii in c(unique(info$study),'all')){
   beta<-coef(mod)['lWeight']
   title(main=sprintf('%s\nr2=%.02f p=%.03f B=%.02f',ii,summary(mod)$r.squared,p,beta))
 }
+dev.off()
+
+pdf('out/minObs.pdf')
+  for(ii in nCuts){
+    thisData<-info[,c('weight','species')]
+    thisData$aveRare<-ave(minRareAll[as.character(ii),],info$species)
+    thisData<-unique(thisData)
+    plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight',ylab='Species',xlim=xlim)
+    text(thisData$weight,thisData$aveRare,thisData$species,cex=.5,col='#00000044')
+    title(main=sprintf('>=%d reads',ii))
+  }
 dev.off()
 
 otuProps<-lapply(otus,function(x)t(apply(x,1,function(x)x/sum(x))))

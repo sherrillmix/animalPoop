@@ -9,9 +9,11 @@ info<-do.call(rbind,lapply(tmp,function(x)x[,c('name','species','weight','study'
 rownames(info)<-info$name
 
 if(!exists('otus')){
+  message('Reading OTUs')
   otus<-mclapply(paste(dataDir,studies,sep='/','otuTab.csv'),read.csv,row.names=1,mc.cores=8)
   names(otus)<-studies
   if(any(mapply(function(x,y)any(!y%in%rownames(x)),otus,split(info$name,info$study))))stop(simpleError('Mismatch between info and OTUs'))
+  message('Done reading OTUs')
 }
 
 calcRares<-function(otu,targets,cut=max(200,floor(quantile(ns,.1)*.9)),...){
@@ -20,6 +22,8 @@ calcRares<-function(otu,targets,cut=max(200,floor(quantile(ns,.1)*.9)),...){
   rares[ns<cut]<-NA  
   return(rares)
 }
+
+message('Calculating rarefaction')
 rares<-mapply(calcRares,otus,split(info$name,info$study))
 rares<-structure(unlist(rares),.Names=unlist(lapply(rares,names)))
 
@@ -31,6 +35,7 @@ minRareAll<-do.call(rbind,lapply(1:10,function(minObs){
   rareAll<-structure(unlist(rareAll),.Names=unlist(lapply(rareAll,names)))
   return(rareAll)
 }))
+message('Done Calculating rarefaction')
 
 info$rare<-rares[info$name]
 info$rareAll<-rareAll[info$name]

@@ -19,6 +19,36 @@ runSwarm<-function(seqs,swarmBin='swarm',swarmArgs='-f'){
 	return(list('otus'=out,'seqs'=seedSeqs))
 }
 
+runQiime<-function(seqs){
+	if(any(is.na(seqs)))stop(simpleError('NAs in seqs'))
+	seqIds<-1:length(seqs)
+	readDir<-tempfile()
+  dir.create(readDir)
+	readFile<-file.path(readDir,'XXX.fa')
+	outDir<-tempfile()
+  seqNames<-sprintf('XXX_%d',seqIds)
+	write.fa(seqNames,seqs,readFile)
+  #miniconda doesn't like sh so need to use bash
+	cmd<-sprintf('echo "source activate qiime1; pick_de_novo_otus.py --input %s --output %s --parallel --jobs_to_start 8 --force"|bash',readFile,outDir)
+  message(cmd)
+	system(cmd)
+  #get otu assignments
+  assigns<-strsplit(readLines(file.path(outDir,'uclust_picked_otus/XXX_otus.txt')),'\t')
+  names(assigns)<-sapply(assigns,'[[',1)
+  assigns<-lapply(assigns,'[',-1)
+	otus<-rep(names(assigns),sapply(assigns,length))
+  names(otus)<-unlist(assigns)
+  out<-otus[seqNames]
+  #get taxa assignments
+  taxa<-strsplit(readLines(file.path(outDir,'uclust_assigned_taxonomy/XXX_rep_set_tax_assignments.txt')),'\t')
+  names(taxa)<-sapply(taxa,'[[',1)
+  taxa<-sapply(taxa,'[[',2)
+  browser()
+  #get sequences
+	return(list('otus'=out,'seqs'=seedSeqs))
+}
+
+
 filterReads<-function(seqs,quals=NULL,minLength=0,maxLength=1e6,minQual=0,maxBadQual=3){
 	if(maxLength==Inf)maxLength<-max(nchar(seqs)) #substring doesn't like Inf
 	out<-sub('[actgn]+$','',sub('^[actgn]+','',seqs)) #remove trimmed sequence at start and end

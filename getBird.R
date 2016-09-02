@@ -19,4 +19,4 @@ if(any(!seqs$sample %in% info$SampleID))stop(simpleError('Unknown sample found')
 
 allSeqs<-tapply(seqs$seq,seqs$sample,function(xx)filterReads(xx,minLength=70,maxLength=200))
 
-runOtuForming(unlist(allSeqs),rep(info$file,sapply(allSeqs,length)),'work/data/bird')
+runOtuForming(unlist(allSeqs),rep(names(allSeqs),sapply(allSeqs,length)),'work/data/bird')

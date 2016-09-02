@@ -40,4 +40,4 @@ seqs$sample<-sub('_[0-9].*','',seqs$name)
 
 allSeqs<-tapply(seqs$seq,seqs$sample,function(xx)filterReads(xx,minLength=250,maxLength=350))
 
-runOtuForming(unlist(allSeqs),rep(info$file,sapply(allSeqs,length)),'work/data/bushman')
+runOtuForming(unlist(allSeqs),rep(names(allSeqs),sapply(allSeqs,length)),'work/data/bushman')

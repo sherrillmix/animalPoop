@@ -1,14 +1,8 @@
 
-source('getAnteaterData.R')
-rm(list=ls())
-source('getBushman.R')
-rm(list=ls())
-source('getFish.R')
-rm(list=ls())
-source('getMgrastData.R')
-rm(list=ls())
-source('getMgrastWhaleData.R')
-rm(list=ls())
-source('getMueggeData.R')
-rm(list=ls())
-
+getFiles<-list.files('.','^get.*\\.R')
+getFiles<-getFiles[getFiles!='getData.R']
+for(ii in getFiles){
+  message(ii)
+  source(ii)
+  rm(list=ls())
+}

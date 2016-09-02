@@ -1,6 +1,6 @@
 ##File name: getMgrastData.R
 ##Creation date: Aug 27, 2015
-##Last modified: Sun Jul 17, 2016  11:00PM
+##Last modified: Fri Sep 02, 2016  09:00AM
 ##Created by: scott
 ##Summary: Download Whale data from MGRAST. More difficult that it should be
 
@@ -68,10 +68,4 @@ allSeqs<-mclapply(info$file,function(x){
 	return(seqs)
 },mc.cores=16)
 
-tmp<-runSwarm(unlist(allSeqs),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t 32')
-otus<-tmp[['otus']]
-seqs<-tmp[['seqs']]
-samples<-rep(info$file,sapply(allSeqs,length))
-write.fa(1:length(seqs),seqs,'work/data/whale/swarmSeqs.fa.gz')
-otuTab<-table(samples,otus)
-write.csv(otuTab,'work/data/whale/otuTab.csv')
+runOtuForming(unlist(allSeqs),rep(info$file,sapply(allSeqs,length)),'work/data/whale')

@@ -107,17 +107,5 @@ out$name<-sprintf('%s_rev',out$name)
 out<-out[out$name %in% seqs$sample & !duplicated(info[,targetCols]),]
 write.csv(out[,targetCols],'work/data/bugRev/info.csv')
 
-tmp<-runSwarm(unlist(seqs$trim[seqs$forward]),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t 32')
-otus<-tmp[['otus']]
-otuSeqs<-tmp[['seqs']]
-write.fa(1:length(otuSeqs),otuSeqs,'work/data/bug/swarmSeqs.fa.gz')
-otuTab<-table(seqs$sample[seqs$forward],otus)
-write.csv(otuTab,'work/data/bug/otuTab.csv')
-
-tmp<-runSwarm(unlist(seqs$trim[!seqs$forward]),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t 32')
-otus<-tmp[['otus']]
-otuSeqs<-tmp[['seqs']]
-write.fa(1:length(otuSeqs),otuSeqs,'work/data/bugRev/swarmSeqs.fa.gz')
-otuTab<-table(seqs$sample[!seqs$forward],otus)
-write.csv(otuTab,'work/data/bugRev/otuTab.csv')
-
+runOtuForming(unlist(seqs$trim[seqs$forward]),seqs$sample[seqs$forward],'work/data/bug')
+runOtuForming(unlist(seqs$trim[!seqs$forward]),seqs$sample[!seqs$forward],'work/data/bugRev')

@@ -27,10 +27,5 @@ allSeqs<-mclapply(info$target,function(x){
 	return(seqs)
 },mc.cores=16)
 
-tmp<-runSwarm(unlist(allSeqs),swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t 32')
-otus<-tmp[['otus']]
-seqs<-tmp[['seqs']]
-samples<-rep(info$file,sapply(allSeqs,length))
-write.fa(1:length(seqs),seqs,'work/data/anteater/swarmSeqs.fa.gz')
-otuTab<-table(samples,otus)
-write.csv(otuTab,'work/data/anteater/otuTab.csv')
+
+runOtuForming(unlist(allSeqs),rep(info$file,sapply(allSeqs,length)),'work/data/anteater')

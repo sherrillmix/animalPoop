@@ -31,7 +31,8 @@ runQiime<-function(seqs){
   #miniconda doesn't like sh so need to use bash
 	cmd<-sprintf('echo "source activate qiime1; pick_de_novo_otus.py --input %s --output %s --parallel --jobs_to_start 8 --force"|bash',readFile,outDir)
   message(cmd)
-	system(cmd)
+	exit<-system(cmd)
+  if(exit!=0)stop(simpleError('Problem running qiime'))
   #get otu assignments
   assigns<-strsplit(readLines(file.path(outDir,'uclust_picked_otus/XXX_otus.txt')),'\t')
   names(assigns)<-sapply(assigns,'[[',1)
@@ -43,9 +44,10 @@ runQiime<-function(seqs){
   taxa<-strsplit(readLines(file.path(outDir,'uclust_assigned_taxonomy/XXX_rep_set_tax_assignments.txt')),'\t')
   names(taxa)<-sapply(taxa,'[[',1)
   taxa<-sapply(taxa,'[[',2)
-  browser()
+  seqs<-read.fa(file.path(outDir,'pynast_aligned_seqs/XXX_rep_set_aligned_pfiltered.fasta'))
+  seqs<-structure(seqs$seq,.Names=seqs$name)
   #get sequences
-	return(list('otus'=out,'seqs'=seedSeqs))
+	return(list('otus'=out,'seqs'=seqs,'taxa'=taxa))
 }
 
 
@@ -66,4 +68,24 @@ filterReads<-function(seqs,quals=NULL,minLength=0,maxLength=1e6,minQual=0,maxBad
 	}
 	out<-out[comboSelector]
 	return(out)
+}
+
+
+runOtuForming<-function(seqs,samples,outDir){
+  #swarm
+  tmp<-runSwarm(seqs,swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t 32')
+  otus<-tmp[['otus']]
+  otuSeqs<-tmp[['seqs']]
+  write.fa(1:length(otuSeqs),otuSeqs,file.path(outDir,'swarmSeqs.fa.gz'))
+  otuTab<-table(samples,otus)
+  write.csv(otuTab,file.path(outDir,'otuTab.csv'))
+  #qiime
+  qiime<-runQiime(seqs)
+  otus<-qiime[['otus']]
+  otuTab<-table(samples,otus)
+  write.csv(otuTab,file.path(outDir,'qiimeOtuTab.csv'))
+  otuSeqs<-qiime[['seqs']]
+  write.fa(names(otuSeqs),otuSeqs,file.path(outDir,'qiimeSeqs.fa.gz'))
+  taxa<-qiime[['taxa']]
+  write.csv(data.frame('name'=names(taxa),'taxa'=taxa,stringsAsFactors=FALSE),file.path(outDir,'qiimeTaxa.csv'))
 }

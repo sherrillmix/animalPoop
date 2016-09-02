@@ -29,7 +29,7 @@ runQiime<-function(seqs){
   seqNames<-sprintf('XXX_%d',seqIds)
   write.fa(seqNames,seqs,readFile)
   #miniconda doesn't like sh so need to use bash
-  cmd<-sprintf('echo "source activate qiime1; pick_de_novo_otus.py --input %s --output %s --parallel --jobs_to_start 8 --force"|bash',readFile,outDir)
+  cmd<-sprintf('echo "source activate qiime1; pick_de_novo_otus.py --input %s --output %s --parallel --jobs_to_start 16 --force"|bash',readFile,outDir)
   message(cmd)
   exit<-system(cmd)
   if(exit!=0)stop(simpleError('Problem running qiime'))

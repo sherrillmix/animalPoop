@@ -1,6 +1,7 @@
 library(dnar)
 library(parallel)
 
+dataDir<-'work/data/'
 studies<-list.files(dataDir)
 tmp<-lapply(paste(dataDir,studies,sep='/','info.csv'),read.csv,stringsAsFactors=FALSE)
 tmp<-mapply(function(x,y){x$study<-y;x},tmp,studies)
@@ -34,24 +35,20 @@ for(grouper in c('swarm','qiime')){
     return(rares)
   }
 
-  dataDir<-'work/data/'
   message('Calculating rarefaction')
   rares<-mapply(calcRares,otus,split(info$name,info$study))
   rares<-structure(unlist(rares),.Names=unlist(lapply(rares,names)))
 
-  rareAll<-mapply(calcRares,otus,split(info$name,info$study),MoreArgs=list(cut=200))
-  rareAll<-structure(unlist(rareAll),.Names=unlist(lapply(rareAll,names)))
-  rareAll<-mapply(calcRares,otus,split(info$name,info$study),MoreArgs=list(cut=200))
-  rareAll<-structure(unlist(rareAll),.Names=unlist(lapply(rareAll,names)))
-
   nCuts<-1:10
-  minRareAll<-do.call(rbind,lapply(nCuts,function(minObs){
-    rareAll<-mapply(calcRares,otus,split(info$name,info$study),MoreArgs=list(cut=200,minObs=minObs))
+  minRareAll<-do.call(rbind,mclapply(nCuts,function(minObs){
+    message(minObs)
+    rareAll<-mapply(calcRares,otus,split(info$name,info$study),MoreArgs=list(cut=400,minObs=minObs))
     rareAll<-structure(unlist(rareAll),.Names=unlist(lapply(rareAll,names)))
     return(rareAll)
-  }))
+  },mc.cores=5))
   rownames(minRareAll)<-nCuts
   minRareAll<-minRareAll[,info$name]
+  rareAll<-minRareAll['1',]
   message('Done Calculating rarefaction')
 
   info$rare<-rares[info$name]
@@ -99,8 +96,17 @@ for(grouper in c('swarm','qiime')){
       thisData<-info[,c('weight','species')]
       thisData$aveRare<-ave(minRareAll[as.character(ii),],info$species)
       thisData<-unique(thisData)
-      plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight',ylab='Species',xlim=xlim)
+      plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight',ylab='Species',xlim=xlim,las=1)
       text(thisData$weight,thisData$aveRare,thisData$species,cex=.5,col='#00000044')
+      lRare<-log(thisData$aveRare)
+      lWeight<-log(thisData$weight)
+      mod<-lm(lRare~lWeight)
+      fakeWeights<-exp(-15:15)
+      pred<-exp(predict(mod,data.frame('lWeight'=log(fakeWeights))))
+      ci<-predict(mod,data.frame('lWeight'=log(fakeWeights)),interval='conf')[,c('lwr','upr')]
+      #pred2<-exp(log(fakeWeights)*coef['lWeight']+coef['(Intercept)'])
+      polygon(c(fakeWeights,rev(fakeWeights)),exp(c(ci[,'lwr'],rev(ci[,'upr']))),border=NA,col='#FF000033')
+      lines(fakeWeights,pred,col='#FF000088',lty=2)
       title(main=sprintf('>=%d reads',ii))
     }
   dev.off()
@@ -116,4 +122,5 @@ for(grouper in c('swarm','qiime')){
     dev.off()
     message('Done ',ii)
   },mc.cores=10)
+
 }

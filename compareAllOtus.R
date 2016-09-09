@@ -10,7 +10,7 @@ rownames(info)<-info$name
 
 addLm<-function(lRare,lWeight){
   mod<-lm(lRare~lWeight)
-  fakeWeights<-exp(-15:15)
+  fakeWeights<-10^(-15:15)
   coef<-mod$coefficients
   pred<-exp(predict(mod,data.frame('lWeight'=log(fakeWeights))))
   ci<-predict(mod,data.frame('lWeight'=log(fakeWeights)),interval='conf')[,c('lwr','upr')]
@@ -23,6 +23,28 @@ calcRares<-function(otu,targets,cut=max(200,floor(quantile(ns,.1)*.9)),...){
   rares<-apply(otu[targets,],1,rareEquation,samples=floor(cut*.5),...)
   rares[ns<cut]<-NA  
   return(rares)
+}
+logAxis<-function(axisNum=2,exponent=TRUE,addExtra=TRUE,minorTcl=-.2,...){
+  if(axisNum %in% c(2,4)){
+    minX<-10^par('usr')[3]
+    maxX<-10^par('usr')[4]
+  }else{
+    minX<-10^par('usr')[1]
+    maxX<-10^par('usr')[2]
+  }
+  allTicks<-unlist(lapply(floor(log10(minX)):ceiling(log10(maxX)),function(x)1:9*10^x))
+  allTicks<-allTicks[allTicks<=maxX & allTicks>=minX]
+  axis(axisNum,allTicks,rep('',length(allTicks)),tcl=minorTcl)
+  prettyY<-seq(ceiling(log10(minX)),floor(log10(maxX)),1)
+  axis(axisNum,10^prettyY,rep('',length(prettyY)),tcl=minorTcl*2)
+  if(length(prettyY)>7)prettyY<-pretty(prettyY)
+  if(addExtra){
+    if(length(prettyY)<5)prettyY<-unique(c(prettyY,prettyY+log10(5),prettyY-log10(2)))
+    if(length(prettyY)<5)prettyY<-unique(c(prettyY,prettyY+log10(2),prettyY-log10(5)))
+  }
+  if(exponent) labs<-ifelse(prettyY==0,1,sapply(prettyY,function(x)as.expression(bquote(10^.(x)))))
+  else labs<-10^prettyY
+  axis(axisNum,10^prettyY,labs,...)
 }
 
 
@@ -70,7 +92,8 @@ for(grouper in c('swarm','qiime')){
   par(mfrow=c(3,3))
   for(ii in unique(info$study)){
     thisData<-info[info$study==ii,]
-    plot(thisData$weight,thisData$rare,log='xy',main=ii,xlab='Weight',ylab='Species')
+    plot(thisData$weight,thisData$rare,log='xy',main=ii,xlab='Weight',ylab='Species',xaxt='n')
+    logAxis(1,minorTcl=0)
     text(thisData$weight,thisData$rare,thisData$species,cex=.5,col='#00000044')
   }
   dev.off()
@@ -84,7 +107,8 @@ for(grouper in c('swarm','qiime')){
     } else {
       thisData<-unique(info[info$study==ii,c('weight','aveRare','species')])
     }
-    plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight',ylab='Species',xlim=xlim)
+    plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight',ylab='Species',xlim=xlim,xaxt='n',las=1)
+    logAxis(1,minorTcl=0)
     text(thisData$weight,thisData$aveRare,thisData$species,cex=.5,col='#00000044')
     mod<-addLm(log(thisData$aveRare),log(thisData$weight))
     p<-coef(summary(mod))['lWeight','Pr(>|t|)']
@@ -93,13 +117,16 @@ for(grouper in c('swarm','qiime')){
   }
   dev.off()
 
-  pdf(sprintf('out/%s_minObs.pdf',grouper))
+  pdf(sprintf('out/%s_minObs.pdf',grouper),width=4,height=4)
     for(ii in nCuts){
       thisData<-info[,c('weight','species')]
       thisData$aveRare<-ave(minRareAll[as.character(ii),],info$species)
       thisData<-unique(thisData)
-      plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight (kg)',ylab='Rarefied species',xlim=xlim,las=1)
-      text(thisData$weight,thisData$aveRare,thisData$species,cex=.5,col='#00000044')
+      par(mar=c(3.1,3,1,.5))
+      plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight (kg)',ylab='Rarefied species',xlim=xlim,las=1,xaxt='n',mgp=c(2,.7,0))
+      logAxis(1,mgp=c(3,.7,0))
+      #logAxis(2,mgp=c(3,.7,0),exponent=FALSE,las=1)
+      text(thisData$weight,thisData$aveRare,thisData$species,cex=.3,col='#00000044')
       mod<-addLm(log(thisData$aveRare),log(thisData$weight))
       title(main=sprintf('>=%d reads',ii))
     }

@@ -8,6 +8,24 @@ tmp<-mapply(function(x,y){x$study<-y;x},tmp,studies)
 info<-do.call(rbind,lapply(tmp,function(x)x[,c('name','species','weight','study')]))
 rownames(info)<-info$name
 
+addLm<-function(lRare,lWeight){
+  mod<-lm(lRare~lWeight)
+  fakeWeights<-exp(-15:15)
+  coef<-mod$coefficients
+  pred<-exp(predict(mod,data.frame('lWeight'=log(fakeWeights))))
+  ci<-predict(mod,data.frame('lWeight'=log(fakeWeights)),interval='conf')[,c('lwr','upr')]
+  polygon(c(fakeWeights,rev(fakeWeights)),exp(c(ci[,'lwr'],rev(ci[,'upr']))),border=NA,col='#FF000033')
+  lines(fakeWeights,pred,col='#FF000088',lty=2)
+  return(mod)
+}
+calcRares<-function(otu,targets,cut=max(200,floor(quantile(ns,.1)*.9)),...){
+  ns<-apply(otu[targets,],1,sum)
+  rares<-apply(otu[targets,],1,rareEquation,samples=floor(cut*.5),...)
+  rares[ns<cut]<-NA  
+  return(rares)
+}
+
+
 if(!exists('swarmOtus')){
   message('Reading swarm OTUs')
   swarmOtus<-mclapply(paste(dataDir,studies,sep='/','otuTab.csv'),read.csv,row.names=1,mc.cores=8)
@@ -27,13 +45,6 @@ for(grouper in c('swarm','qiime')){
   message(grouper)
   if(grouper=='qiime') otus<-qiimeOtus
   else if(grouper=='swarm') otus<-swarmOtus
-
-  calcRares<-function(otu,targets,cut=max(200,floor(quantile(ns,.1)*.9)),...){
-    ns<-apply(otu[targets,],1,sum)
-    rares<-apply(otu[targets,],1,rareEquation,samples=floor(cut*.5),...)
-    rares[ns<cut]<-NA  
-    return(rares)
-  }
 
   message('Calculating rarefaction')
   rares<-mapply(calcRares,otus,split(info$name,info$study))
@@ -75,16 +86,7 @@ for(grouper in c('swarm','qiime')){
     }
     plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight',ylab='Species',xlim=xlim)
     text(thisData$weight,thisData$aveRare,thisData$species,cex=.5,col='#00000044')
-    lRare<-log(thisData$aveRare)
-    lWeight<-log(thisData$weight)
-    mod<-lm(lRare~lWeight)
-    fakeWeights<-exp(-15:15)
-    coef<-mod$coefficients
-    pred<-exp(predict(mod,data.frame('lWeight'=log(fakeWeights))))
-    ci<-predict(mod,data.frame('lWeight'=log(fakeWeights)),interval='conf')[,c('lwr','upr')]
-    #pred2<-exp(log(fakeWeights)*coef['lWeight']+coef['(Intercept)'])
-    polygon(c(fakeWeights,rev(fakeWeights)),exp(c(ci[,'lwr'],rev(ci[,'upr']))),border=NA,col='#FF000033')
-    lines(fakeWeights,pred,col='#FF000088',lty=2)
+    mod<-addLm(log(thisData$aveRare),log(thisData$weight))
     p<-coef(summary(mod))['lWeight','Pr(>|t|)']
     beta<-coef(mod)['lWeight']
     title(main=sprintf('%s\nr2=%.02f p=%.03f B=%.02f',ii,summary(mod)$r.squared,p,beta))
@@ -96,17 +98,9 @@ for(grouper in c('swarm','qiime')){
       thisData<-info[,c('weight','species')]
       thisData$aveRare<-ave(minRareAll[as.character(ii),],info$species)
       thisData<-unique(thisData)
-      plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight',ylab='Species',xlim=xlim,las=1)
+      plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight (kg)',ylab='Rarefied species',xlim=xlim,las=1)
       text(thisData$weight,thisData$aveRare,thisData$species,cex=.5,col='#00000044')
-      lRare<-log(thisData$aveRare)
-      lWeight<-log(thisData$weight)
-      mod<-lm(lRare~lWeight)
-      fakeWeights<-exp(-15:15)
-      pred<-exp(predict(mod,data.frame('lWeight'=log(fakeWeights))))
-      ci<-predict(mod,data.frame('lWeight'=log(fakeWeights)),interval='conf')[,c('lwr','upr')]
-      #pred2<-exp(log(fakeWeights)*coef['lWeight']+coef['(Intercept)'])
-      polygon(c(fakeWeights,rev(fakeWeights)),exp(c(ci[,'lwr'],rev(ci[,'upr']))),border=NA,col='#FF000033')
-      lines(fakeWeights,pred,col='#FF000088',lty=2)
+      mod<-addLm(log(thisData$aveRare),log(thisData$weight))
       title(main=sprintf('>=%d reads',ii))
     }
   dev.off()

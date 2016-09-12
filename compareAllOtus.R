@@ -24,12 +24,12 @@ calcRares<-function(otu,targets,cut=max(200,floor(quantile(ns,.1)*.9)),...){
   rares[ns<cut]<-NA  
   return(rares)
 }
-logAxis<-function(axisNum=2,exponent=TRUE,addExtra=TRUE,minorTcl=-.2,...){
+logAxis<-function(axisNum=2,exponent=TRUE,addExtra=TRUE,minorTcl=-.2,axisMin=-Inf,...){
   if(axisNum %in% c(2,4)){
-    minX<-10^par('usr')[3]
+    minX<-max(10^par('usr')[3],axisMin)
     maxX<-10^par('usr')[4]
   }else{
-    minX<-10^par('usr')[1]
+    minX<-max(10^par('usr')[1],axisMin)
     maxX<-10^par('usr')[2]
   }
   allTicks<-unlist(lapply(floor(log10(minX)):ceiling(log10(maxX)),function(x)1:9*10^x))
@@ -60,29 +60,37 @@ if(!exists('qiimeOtus')){
   qiimeOtus<-mclapply(paste(dataDir,studies,sep='/','qiimeOtuTab.csv'),read.csv,row.names=1,mc.cores=8)
   names(qiimeOtus)<-studies
   if(any(mapply(function(x,y)any(!y%in%rownames(x)),qiimeOtus,split(info$name,info$study))))stop(simpleError('Mismatch between info and OTUs'))
+  qiimeTaxa<-mclapply(paste(dataDir,studies,sep='/','qiimeTaxa.csv'),read.csv,row.names=1,mc.cores=8)
   message('Done reading qiime OTUs')
 }
 #select otu type here
+if(!exists('combinedRare')){
+  combinedRare<-lapply(list('qiime'=qiimeOtus,'swarm'=swarmOtus),function(otus){
+    message('Calculating rarefaction')
+    rares<-mapply(calcRares,otus,split(info$name,info$study))
+    rares<-structure(unlist(rares),.Names=unlist(lapply(rares,names)))
+    nCuts<-1:10
+    minRareAll<-do.call(rbind,mclapply(nCuts,function(minObs){
+      message(minObs)
+      rareAll<-mapply(calcRares,otus,split(info$name,info$study),MoreArgs=list(cut=400,minObs=minObs))
+      rareAll<-structure(unlist(rareAll),.Names=unlist(lapply(rareAll,names)))
+      return(rareAll)
+    },mc.cores=5))
+    rownames(minRareAll)<-nCuts
+    minRareAll<-minRareAll[,info$name]
+    message('Done Calculating rarefaction')
+    return(list('rares'=rares,'minRareAll'=minRareAll))
+  })
+}
+
 for(grouper in c('swarm','qiime')){
   message(grouper)
   if(grouper=='qiime') otus<-qiimeOtus
   else if(grouper=='swarm') otus<-swarmOtus
 
-  message('Calculating rarefaction')
-  rares<-mapply(calcRares,otus,split(info$name,info$study))
-  rares<-structure(unlist(rares),.Names=unlist(lapply(rares,names)))
-
-  nCuts<-1:10
-  minRareAll<-do.call(rbind,mclapply(nCuts,function(minObs){
-    message(minObs)
-    rareAll<-mapply(calcRares,otus,split(info$name,info$study),MoreArgs=list(cut=400,minObs=minObs))
-    rareAll<-structure(unlist(rareAll),.Names=unlist(lapply(rareAll,names)))
-    return(rareAll)
-  },mc.cores=5))
-  rownames(minRareAll)<-nCuts
-  minRareAll<-minRareAll[,info$name]
+  rares<-combinedRare[[grouper]][['rares']]
+  minRareAll<-combinedRare[[grouper]][['minRareAll']]
   rareAll<-minRareAll['1',]
-  message('Done Calculating rarefaction')
 
   info$rare<-rares[info$name]
   info$rareAll<-rareAll[info$name]
@@ -92,8 +100,8 @@ for(grouper in c('swarm','qiime')){
   par(mfrow=c(3,3))
   for(ii in unique(info$study)){
     thisData<-info[info$study==ii,]
-    plot(thisData$weight,thisData$rare,log='xy',main=ii,xlab='Weight',ylab='Species',xaxt='n')
-    logAxis(1,minorTcl=0)
+    plot(thisData$weight,thisData$rare,log='xy',main=ii,xlab='Weight (kg)',ylab='Rarefied species',xaxt='n')
+    logAxis(1,minorTcl=0,addExtra=FALSE)
     text(thisData$weight,thisData$rare,thisData$species,cex=.5,col='#00000044')
   }
   dev.off()
@@ -107,7 +115,7 @@ for(grouper in c('swarm','qiime')){
     } else {
       thisData<-unique(info[info$study==ii,c('weight','aveRare','species')])
     }
-    plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight',ylab='Species',xlim=xlim,xaxt='n',las=1)
+    plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight (kg)',ylab='Rarefied species',xlim=xlim,xaxt='n',las=1)
     logAxis(1,minorTcl=0)
     text(thisData$weight,thisData$aveRare,thisData$species,cex=.5,col='#00000044')
     mod<-addLm(log(thisData$aveRare),log(thisData$weight))
@@ -118,14 +126,14 @@ for(grouper in c('swarm','qiime')){
   dev.off()
 
   pdf(sprintf('out/%s_minObs.pdf',grouper),width=4,height=4)
-    for(ii in nCuts){
+    for(ii in as.numeric(rownames(minRareAll))){
       thisData<-info[,c('weight','species')]
       thisData$aveRare<-ave(minRareAll[as.character(ii),],info$species)
       thisData<-unique(thisData)
       par(mar=c(3.1,3,1,.5))
-      plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight (kg)',ylab='Rarefied species',xlim=xlim,las=1,xaxt='n',mgp=c(2,.7,0))
+      plot(thisData$weight,thisData$aveRare,log='xy',xlab='Weight (kg)',ylab='Rarefied species',xlim=xlim,las=1,xaxt='n',mgp=c(2,.7,0),yaxt='n')
       logAxis(1,mgp=c(3,.7,0))
-      #logAxis(2,mgp=c(3,.7,0),exponent=FALSE,las=1)
+      logAxis(2,mgp=c(3,.7,0),exponent=FALSE,las=1)
       text(thisData$weight,thisData$aveRare,thisData$species,cex=.3,col='#00000044')
       mod<-addLm(log(thisData$aveRare),log(thisData$weight))
       title(main=sprintf('>=%d reads',ii))
@@ -145,3 +153,33 @@ for(grouper in c('swarm','qiime')){
   },mc.cores=10)
 
 }
+
+cols<-rainbow.lab(length(unique(info$study)),alpha=.7)
+names(cols)<-unique(info$study)
+pdf('out/qiime_vs_swarm.pdf',width=4,height=4)
+  qMinRareAll<-combinedRare[['qiime']][['minRareAll']]
+  sMinRareAll<-combinedRare[['swarm']][['minRareAll']]
+  plot(qMinRareAll['1',],sMinRareAll['1',],xlab='uclust rarefied species count',ylab='swarm rarefied species count',bg=cols[info$study],pch=21,cex=.6,col=NA,las=1)
+  abline(0,1,col='#FF000033',lty=2)
+  legend('bottomright',names(cols),pch=21,pt.bg=cols,cex=.55,inset=.01,col=NA)
+  plot(qMinRareAll['2',],sMinRareAll['2',],xlab='uclust rarefied species count',ylab='swarm rarefied species count',main='No singletons',bg=cols[info$study],pch=21,cex=.5,col=NA,las=1)
+  abline(0,1,col='#FF000033',lty=2)
+dev.off()
+
+nQiime<-lapply(qiimeOtus,apply,2,sum)
+nSwarm<-lapply(swarmOtus,apply,2,sum)
+pdf('out/qiime_vs_swarmNs.pdf')
+  par(mfrow=c(3,3),mar=c(4,4,1,.1),mgp=c(2.5,1,0))
+  for(ii in names(nQiime)){
+    ylim<-range(unlist(c(nQiime[ii],nSwarm[ii])))
+    xlim<-range(sapply(c(list(1),nQiime[ii],nSwarm[ii]),length))
+    plot(1,1,type='n',xlim=xlim,ylim=ylim,log='y',las=1,yaxt='n',main=ii,xlab='Cumulative number of OTUs',ylab='Read frequency')
+    if(ii == names(nQiime)[[1]])legend('topleft',c('uclust','swarm'),lty=1,col=c('#FF000099','#0000FF99'),bty='n')
+    logAxis(2,las=1,addExtra=FALSE,axisMin=1)
+    x<-1:length(nQiime[[ii]])
+    #lines(x/max(x),sort(nQiime[[ii]]),col='#FF000099')
+    lines(x,sort(nQiime[[ii]]),col='#FF000099')
+    x<-1:length(nSwarm[[ii]]) 
+    lines(x,sort(nSwarm[[ii]]),col='#0000FF99')
+  }
+dev.off()

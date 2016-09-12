@@ -44,9 +44,9 @@ runQiime<-function(seqs){
   taxa<-strsplit(readLines(file.path(outDir,'uclust_assigned_taxonomy/XXX_rep_set_tax_assignments.txt')),'\t')
   names(taxa)<-sapply(taxa,'[[',1)
   taxa<-sapply(taxa,'[[',2)
+  #get sequences
   seqs<-read.fa(file.path(outDir,'pynast_aligned_seqs/XXX_rep_set_aligned_pfiltered.fasta'))
   seqs<-structure(seqs$seq,.Names=seqs$name)
-  #get sequences
   return(list('otus'=out,'seqs'=seqs,'taxa'=taxa))
 }
 

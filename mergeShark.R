@@ -8,4 +8,4 @@ merged<-merge(bush,nmfs,all=TRUE)
 if(any(is.na(merged$DATE)))stop(simpleError('Missing sample info'))
 print(merged[is.na(merged$species),])
 merged<-merged[!is.na(merged$species),]
-
+write.csv(merged,'shark/mergedShark.csv',row.names=FALSE)

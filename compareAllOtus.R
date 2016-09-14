@@ -46,6 +46,21 @@ logAxis<-function(axisNum=2,exponent=TRUE,addExtra=TRUE,minorTcl=-.2,axisMin=-In
   else labs<-10^prettyY
   axis(axisNum,10^prettyY,labs,...)
 }
+qiimeTaxaToTable<-function(taxa,targetRanks=c("k","p","c","o","f","g","s")){
+  unassigned<-taxa=='Unassigned'
+  splits<-strsplit(taxa,'; ')
+  ranks<-lapply(splits,function(x){
+    labels<-sub('^.__','',x)
+    names(labels)<-sub('__.*','',x)
+    return(labels)
+  })
+  if(any(nchar(unlist(lapply(ranks[!unassigned],names)))>1))stop(simpleError('Unexpected taxonomic rank found'))
+  out<-do.call(rbind,lapply(ranks,function(x)x[targetRanks]))
+  colnames(out)<-targetRanks
+  out[out=='']<-NA
+  return(out)
+}
+
 
 
 if(!exists('swarmOtus')){
@@ -60,7 +75,10 @@ if(!exists('qiimeOtus')){
   qiimeOtus<-mclapply(paste(dataDir,studies,sep='/','qiimeOtuTab.csv'),read.csv,row.names=1,mc.cores=8)
   names(qiimeOtus)<-studies
   if(any(mapply(function(x,y)any(!y%in%rownames(x)),qiimeOtus,split(info$name,info$study))))stop(simpleError('Mismatch between info and OTUs'))
-  qiimeTaxa<-mclapply(paste(dataDir,studies,sep='/','qiimeTaxa.csv'),read.csv,row.names=1,mc.cores=8)
+  qiimeTaxaDf<-mclapply(paste(dataDir,studies,sep='/','qiimeTaxa.csv'),read.csv,row.names=1,stringsAsFactors=FALSE,mc.cores=10)
+  qiimeTaxa<-mclapply(qiimeTaxaDf,function(x){out<-qiimeTaxaToTable(x$taxa);rownames(out)<-rownames(x);return(out)},mc.cores=10)
+  names(qiimeTaxa)<-names(qiimeTaxaDf)<-studies
+  if(any(mapply(function(x,y)any(sort(x)!=sort(y)),lapply(qiimeOtus,colnames),lapply(qiimeTaxa,rownames))))stop(simpleError('Mismatch between taxas and OTUs'))
   message('Done reading qiime OTUs')
 }
 #select otu type here
@@ -173,13 +191,16 @@ pdf('out/qiime_vs_swarmNs.pdf')
   for(ii in names(nQiime)){
     ylim<-range(unlist(c(nQiime[ii],nSwarm[ii])))
     xlim<-range(sapply(c(list(1),nQiime[ii],nSwarm[ii]),length))
-    plot(1,1,type='n',xlim=xlim,ylim=ylim,log='y',las=1,yaxt='n',main=ii,xlab='Cumulative number of OTUs',ylab='Read frequency')
+    plot(1,1,type='n',xlim=xlim/1000,ylim=ylim,log='y',las=1,yaxt='n',main=ii,xlab='Cumulative number of OTUs (x1000)',ylab='Read frequency')
     if(ii == names(nQiime)[[1]])legend('topleft',c('uclust','swarm'),lty=1,col=c('#FF000099','#0000FF99'),bty='n')
     logAxis(2,las=1,addExtra=FALSE,axisMin=1)
     x<-1:length(nQiime[[ii]])
     #lines(x/max(x),sort(nQiime[[ii]]),col='#FF000099')
-    lines(x,sort(nQiime[[ii]]),col='#FF000099')
+    lines(x/1000,sort(nQiime[[ii]]),col='#FF000099')
     x<-1:length(nSwarm[[ii]]) 
-    lines(x,sort(nSwarm[[ii]]),col='#0000FF99')
+    lines(x/1000,sort(nSwarm[[ii]]),col='#0000FF99')
   }
 dev.off()
+
+
+

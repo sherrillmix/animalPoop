@@ -1,8 +1,8 @@
 
 getFiles<-list.files('.','^get.*\\.R')
 getFiles<-getFiles[getFiles!='getData.R']
-for(ii in getFiles){
+lapply(getFiles,function(ii){
   message(ii)
-  source(ii)
-  rm(list=ls())
-}
+  #make sure each starts fresh
+  source(ii,local=TRUE)
+})

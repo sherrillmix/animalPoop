@@ -60,6 +60,12 @@ qiimeTaxaToTable<-function(taxa,targetRanks=c("k","p","c","o","f","g","s")){
   out[out=='']<-NA
   return(out)
 }
+taxaTableToName<-function(taxa,addGenusToSpecies=TRUE,makeUnique=TRUE){
+  if(addGenusToSpecies)taxa[,'s']<-ifelse(is.na(taxa[,'s']),taxa[,'s'],paste(taxa[,'g'],taxa[,'s']))
+  out<-apply(taxa,1,function(x)paste(colnames(taxa),x,sep='__')[max(c(1,which(!is.na(x))))])
+  if(makeUnique)out<-paste(out,ave(out,out,FUN=function(x)1:length(x)))
+  return(out)
+}
 
 
 
@@ -76,8 +82,14 @@ if(!exists('qiimeOtus')){
   names(qiimeOtus)<-studies
   if(any(mapply(function(x,y)any(!y%in%rownames(x)),qiimeOtus,split(info$name,info$study))))stop(simpleError('Mismatch between info and OTUs'))
   qiimeTaxaDf<-mclapply(paste(dataDir,studies,sep='/','qiimeTaxa.csv'),read.csv,row.names=1,stringsAsFactors=FALSE,mc.cores=10)
-  qiimeTaxa<-mclapply(qiimeTaxaDf,function(x){out<-qiimeTaxaToTable(x$taxa);rownames(out)<-rownames(x);return(out)},mc.cores=10)
+  qiimeTaxa<-mclapply(qiimeTaxaDf,function(x){
+    out<-qiimeTaxaToTable(x$taxa)
+    out<-cbind(out,'name'=taxaTableToName(out))
+    rownames(out)<-rownames(x)
+    return(out)
+  },mc.cores=10)
   names(qiimeTaxa)<-names(qiimeTaxaDf)<-studies
+
   if(any(mapply(function(x,y)any(sort(x)!=sort(y)),lapply(qiimeOtus,colnames),lapply(qiimeTaxa,rownames))))stop(simpleError('Mismatch between taxas and OTUs'))
   message('Done reading qiime OTUs')
 }
@@ -101,6 +113,28 @@ if(!exists('combinedRare')){
   })
 }
 
+if(!exists('otuProps')){
+  otuProps<-lapply(names(qiimeOtus),function(study){
+    x<-qiimeOtus[[study]]
+    rownames(x)<-paste(info[rownames(x),'species'],ave(1:nrow(x),info[rownames(x),'species'],FUN=function(z)1:length(z)))
+    colnames(x)<-qiimeTaxa[[study]][colnames(x),'name']
+    out<-t(apply(x,1,function(x)x/sum(x)))
+    return(out)
+  })
+  names(otuProps)<-names(qiimeOtus)
+
+  dummy<-mclapply(unique(info$study),function(ii){
+    message(ii)
+    thisOtus<-otuProps[[ii]][,apply(otuProps[[ii]],2,max)>.01]
+    thisOtus<-as.matrix(log(thisOtus+1))
+    pdf(sprintf('out/heat/qiime_%s.pdf',ii),height=20,width=20)
+      heatmap(thisOtus,col=rev(heat.colors(100)),main=ii,scale='none',margins=c(8,5))
+    dev.off()
+    message('Done ',ii)
+  },mc.cores=10)
+
+}
+
 for(grouper in c('swarm','qiime')){
   message(grouper)
   if(grouper=='qiime') otus<-qiimeOtus
@@ -115,7 +149,7 @@ for(grouper in c('swarm','qiime')){
   info$aveRare<-ave(info$rare,info$species,info$study,FUN=function(x)mean(x,na.rm=TRUE))
   info$aveRareAll<-ave(info$rareAll,info$species,info$study,FUN=function(x)mean(x,na.rm=TRUE))
   pdf(sprintf('out/%s_raw.pdf',grouper),width=8,height=9)
-  par(mfrow=c(3,3))
+  par(mfrow=c(3,4))
   for(ii in unique(info$study)){
     thisData<-info[info$study==ii,]
     plot(thisData$weight,thisData$rare,log='xy',main=ii,xlab='Weight (kg)',ylab='Rarefied species',xaxt='n')
@@ -124,7 +158,7 @@ for(grouper in c('swarm','qiime')){
   }
   dev.off()
   pdf(sprintf('out/%s_mean.pdf',grouper),width=8,height=9)
-  par(mfrow=c(3,3))
+  par(mfrow=c(3,4))
   xlim<-range(info$weight)
   for(ii in c(unique(info$study),'all')){
     if(ii=='all'){
@@ -158,18 +192,6 @@ for(grouper in c('swarm','qiime')){
     }
   dev.off()
 
-  otuProps<-lapply(otus,function(x)t(apply(x,1,function(x)x/sum(x))))
-  mclapply(unique(info$study),function(ii){
-    message(ii)
-    pdf(sprintf('out/heat/%s_%s.pdf',grouper,ii),height=20,width=20)
-    thisOtus<-otuProps[[ii]][,apply(otuProps[[ii]],2,max)>.01]
-    thisOtus<-as.matrix(log(thisOtus+1))
-    rownames(thisOtus)<-info[rownames(thisOtus),'species']
-    heatmap(thisOtus,col=rev(heat.colors(100)),main=ii,scale='column')
-    dev.off()
-    message('Done ',ii)
-  },mc.cores=10)
-
 }
 
 cols<-rainbow.lab(length(unique(info$study)),alpha=.7)
@@ -187,7 +209,7 @@ dev.off()
 nQiime<-lapply(qiimeOtus,apply,2,sum)
 nSwarm<-lapply(swarmOtus,apply,2,sum)
 pdf('out/qiime_vs_swarmNs.pdf')
-  par(mfrow=c(3,3),mar=c(4,4,1,.1),mgp=c(2.5,1,0))
+  par(mfrow=c(3,4),mar=c(4,4,1,.1),mgp=c(2.5,1,0))
   for(ii in names(nQiime)){
     ylim<-range(unlist(c(nQiime[ii],nSwarm[ii])))
     xlim<-range(sapply(c(list(1),nQiime[ii],nSwarm[ii]),length))

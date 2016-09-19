@@ -126,9 +126,13 @@ if(!exists('otuProps')){
   dummy<-mclapply(unique(info$study),function(ii){
     message(ii)
     thisOtus<-otuProps[[ii]][,apply(otuProps[[ii]],2,max)>.01]
-    thisOtus<-as.matrix(log(thisOtus+1))
+    #thisOtus<-as.matrix(log(thisOtus+1))
     pdf(sprintf('out/heat/qiime_%s.pdf',ii),height=20,width=20)
-      heatmap(thisOtus,col=rev(heat.colors(100)),main=ii,scale='none',margins=c(8,5))
+      heat<-heatmap(thisOtus,col=rev(heat.colors(100)),main=ii,scale='none',margins=c(8,5))
+    dev.off()
+    thisOtus<-otuProps[[ii]][,apply(otuProps[[ii]],2,max)>.05]
+    pdf(sprintf('out/heat/qiime_%s_05.pdf',ii),height=20,width=20)
+      heat<-heatmap(t(thisOtus),col=rev(heat.colors(100)),main=ii,scale='none',margins=c(8,8))
     dev.off()
     message('Done ',ii)
   },mc.cores=10)

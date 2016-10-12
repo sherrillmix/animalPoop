@@ -1,6 +1,6 @@
 ##File name: getMgrastData.R
 ##Creation date: Aug 27, 2015
-##Last modified: Wed Sep 14, 2016  08:00AM
+##Last modified: Wed Oct 12, 2016  06:00AM
 ##Created by: scott
 ##Summary: Download Whale data from MGRAST. More difficult that it should be
 
@@ -29,11 +29,10 @@ for(ii in projectIds){
 	thisInfo<-read.table(sprintf('data/mgrast/mgrastPages/%d.tsv',ii),sep='\t',header=TRUE,stringsAsFactors=FALSE)
 	for(jj in samples){
 		message('  Sample ',jj)
-		if(thisInfo[thisInfo$MG.RAST.ID==jj,'Sequence.Type']=='WGS'){
-			message('    ',jj,' is WGS. Skipping')
-			next()
-		}
-		#outPath<-sprintf('data/mgrast/%s.fa.gz',jj)
+		#if(thisInfo[thisInfo$MG.RAST.ID==jj,'Sequence.Type']=='WGS'){
+			#message('    ',jj,' is WGS. Skipping')
+			#next()
+		#}
 		outPath<-sprintf('data/mgrast/%s.fastq.gz',jj)
 		if(!file.exists(outPath)){
 			message('    Downloading file')
@@ -45,7 +44,6 @@ for(ii in projectIds){
 			message('    File exists')
 		}
 	}
-	thisInfo<-thisInfo[thisInfo$Sequence.Type!='WGS',]
 	if(!exists('info')){
 		info<-thisInfo
 	} else {
@@ -58,9 +56,12 @@ weights<-read.csv('data/mgrast/mgrastWhaleWeights.csv',stringsAsFactors=FALSE) #
 rownames(weights)<-weights$name
 info$animal<-sapply(strsplit(info$Metagenome.Name,'\\.'),'[[',1)
 info$sequencing<-sub('.*16S','16S',info$Metagenome.Name)
-if(any(!info$sequencing %in% sequencings))stop(simpleError('Unknown sequencing'))
 info<-cbind(info,weights[info$animal,-1])
 info$name<-info$file
+wgs<-info[info$Sequence.Type=='WGS',]
+info<-info[info$Sequence.Type!='WGS',]
+if(any(!info$sequencing %in% sequencings))stop(simpleError('Unknown sequencing'))
+write.csv(wgs,'work/wgs/whale.csv')
 
 for(ii in names(sequencings)){
   message(ii)

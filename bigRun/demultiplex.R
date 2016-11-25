@@ -9,4 +9,6 @@ system('splitbarcodes data/Undetermined_S0_L001_R1_001.fastq.gz data/Undetermine
 #library(dnar)
 #i1<-read.fastq('data/Undetermined_S0_L001_I1_001.fastq.gz')
 #i2<-read.fastq('data/Undetermined_S0_L001_I2_001.fastq.gz')
+#bars<-paste(i1$seq,i2$seq)
+#tail(sort(table(bars[!bars %in% paste(samples$Index1Sequence,samples$Index2Sequence)])))
 

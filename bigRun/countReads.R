@@ -12,9 +12,37 @@ pairCounts<-tapply(readCounts,pairs,'[[',1)
 
 write.csv(data.frame('sample'=pairs,'file'=basename(fastqs),'count'=readCounts),'counts.csv',row.names=FALSE)
 
-samples<-read.csv('Scott_Island_Biogeo_Combined_MFs_V5.csv')
+samples<-read.csv('sherrill-mix_islandGut.csv',stringsAsFactors=FALSE)
 samples$readCounts<-pairCounts[samples$X.SampleID]
-samples$qpcr<-apply(sample[,c('X16S.qPCR.copies.per.reaction.replicate.1','X16S.qPCR.copies.per.reaction.replicate.2')],1,mean)
+samples$qpcr<-apply(samples[,c('X16S.qPCR.copies.per.reaction.replicate.1','X16S.qPCR.copies.per.reaction.replicate.2')],1,mean)
 
 table(samples$readCounts>100,samples$PlateNumber)
 
+i1<-read.fastq('data/Undetermined_S0_L001_I1_001.fastq.gz')
+i2<-read.fastq('data/Undetermined_S0_L001_I2_001.fastq.gz')
+bars<-paste(i1$seq,i2$seq)
+tail(sort(table(bars[!bars %in% paste(samples$Index1Sequence,samples$Index2Sequence)])))
+
+tab1<-sort(table(i1$seq),decreasing=TRUE)
+tab2<-sort(table(i2$seq),decreasing=TRUE)
+
+i1Summary<-data.frame(
+  'bar'=names(tab1),
+  'count'=as.vector(tab1),
+  'inIndex1'=names(tab1) %in% samples$Index1Sequence,
+  'inRevCompIndex1'=names(tab1) %in% revComp(samples$Index1Sequence),
+  'inIndex2'=names(tab1) %in% samples$Index2Sequence,
+  'inRevCompIndex2'=names(tab1) %in% revComp(samples$Index2Sequence),
+stringsAsFactors=FALSE)
+
+i2Summary<-data.frame(
+  'bar'=names(tab2),
+  'count'=as.vector(tab2),
+  'inIndex1'=names(tab2) %in% samples$Index1Sequence,
+  'inRevCompIndex1'=names(tab2) %in% revComp(samples$Index1Sequence),
+  'inIndex2'=names(tab2) %in% samples$Index2Sequence,
+  'inRevCompIndex2'=names(tab2) %in% revComp(samples$Index2Sequence),
+stringsAsFactors=FALSE)
+
+write.csv(i1Summary[i1Summary$count>2,],'i1.csv')
+write.csv(i2Summary[i2Summary$count>2,],'i2.csv')

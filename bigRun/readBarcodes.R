@@ -23,7 +23,24 @@ tmp<-textConnection('text','w')
 write.csv(samples[,origCols],tmp,row.names=FALSE)
 close(tmp)
 text[1]<-gsub('"','',text[1])
-writeLines(text,'sherrill-mix_islandGut.csv')
+writeLines(text,'sherrill-MixLauder_islandGut.csv')
+
+samples2<-read.csv('Abby_16S_12022016_Scott_IB_New_MF_V3.csv',stringsAsFactors=FALSE,check.names=FALSE)
+samples2<-samples2[!is.na(samples2$sample_name)&samples2$sample_name!='',]
+origCols<-colnames(samples2)
+samples2$fBarName<-sprintf('gc%d',samples2[,'forward_barcode_i5_index2'])
+samples2$fBar<-forward[samples2$fBarName,'seq']
+if(any(samples2$fBar!=samples2$i2_sequence))stop('Manually assigned forward barcodes do not match name')
+samples2$rBarName<-sprintf('%s__%s',sub('Plate ','plate',samples2$reverse_primer_plate_number),samples2$reverse_barcode_well_i7_index1)
+samples2$rBar<-reverse[samples2$rBarName,'bar']
+if(any(is.na(samples2$rBar))|any(samples$rBar=='')|any(is.na(samples2$fBar))|any(samples$fBar==''))stop('Unknown barcode')
+if(any(table(paste(samples2$fBar,samples2$rBar))>1))stop('Duplicate barcode')
+if(any(table(samples2[,'sample_name'])>1))stop('Duplicate sample ID')
+samples2$i1_sequence<-samples2$rBar
+samples2$barcode_sequence<-paste(samples2$i2_sequence,samples2$i1_sequence,sep='')
+
+write.csv(samples2[,origCols],'sherrill-MixLauder_islandGut2.csv',row.names=FALSE)
+
 
 
 

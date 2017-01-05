@@ -12,7 +12,7 @@ pairCounts<-tapply(readCounts,pairs,'[[',1)
 
 write.csv(data.frame('sample'=pairs,'file'=basename(fastqs),'count'=readCounts),'counts.csv',row.names=FALSE)
 
-samples<-read.csv('sherrill-mix_islandGut.csv',stringsAsFactors=FALSE)
+samples<-read.csv('sherrill-MixLauder_islandGut.csv',stringsAsFactors=FALSE)
 samples$readCounts<-pairCounts[samples$X.SampleID]
 samples$qpcr<-apply(samples[,c('X16S.qPCR.copies.per.reaction.replicate.1','X16S.qPCR.copies.per.reaction.replicate.2')],1,mean)
 

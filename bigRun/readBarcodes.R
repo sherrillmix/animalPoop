@@ -1,8 +1,10 @@
+library(dnar)
+
 forward<-read.csv('ForwardBarcodes.csv',header=FALSE,stringsAsFactors=FALSE)
 colnames(forward)<-c('name','seq')
 rownames(forward)<-forward$name
 
-reverse<-read.csv('ReverseBarcodes.csv',header=FALSE,stringsAsFactors=FALSE)
+reverse<-read.csv('ReverseBarcodes2.csv',header=FALSE,stringsAsFactors=FALSE)
 colnames(reverse)[1:8]<-c('plate','well','name','revCompIlluminaAdaptor','bar','reversePad','linker','primer')
 rownames(reverse)<-sprintf('%s__%s',reverse$plate,reverse$well)
 
@@ -25,7 +27,7 @@ close(tmp)
 text[1]<-gsub('"','',text[1])
 writeLines(text,'sherrill-MixLauder_islandGut.csv')
 
-samples2<-read.csv('Abby_16S_12022016_Scott_IB_New_MF_V3.csv',stringsAsFactors=FALSE,check.names=FALSE)
+samples2<-read.csv('sherrill-MixLauder_islandGut2-APL4.csv',stringsAsFactors=FALSE,check.names=FALSE)
 samples2<-samples2[!is.na(samples2$sample_name)&samples2$sample_name!='',]
 origCols<-colnames(samples2)
 samples2$fBarName<-sprintf('gc%d',samples2[,'forward_barcode_i5_index2'])

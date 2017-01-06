@@ -14,7 +14,7 @@ pairCounts<-tapply(readCounts,list(pairs,sprintf('run%d',runs)),'[[',1)
 write.csv(pairCounts,'counts.csv')
 
 samples<-read.csv('sherrill-MixLauder_islandGut.csv',stringsAsFactors=FALSE)
-samples$readCounts<-pairCounts[samples$X.SampleID]
+samples$readCounts<-apply(pairCounts,1,max,na.rm=TRUE)[samples$X.SampleID]
 samples$qpcr<-apply(samples[,c('X16S.qPCR.copies.per.reaction.replicate.1','X16S.qPCR.copies.per.reaction.replicate.2')],1,mean)
 
 table(samples$readCounts>100,samples$PlateNumber)

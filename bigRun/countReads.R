@@ -1,16 +1,17 @@
 library(dnar)
 library(parallel)
-fastqs<-list.files('split','fastq.gz',full.names=TRUE)
+fastqs<-c(list.files('split','fastq.gz',full.names=TRUE),list.files('split2','fastq.gz',full.names=TRUE))
 readCounts<-unlist(mclapply(fastqs,function(xx){
   nrow(read.fastq(xx))
 },mc.cores=30))
 names(readCounts)<-fastqs
 pairs<-sub('_[12].fastq.gz$','',basename(fastqs))
-if(any(table(pairs)!=2))stop("Messed up left right pair")
-if(any(tapply(readCounts,pairs,function(x)all(x!=x[1]))))stop('Count disagreement')
-pairCounts<-tapply(readCounts,pairs,'[[',1)
+runs<-ifelse(dirname(fastqs)=='split',1,ifelse(dirname(fastqs)=='split2',2,NA))
+if(any(!table(pairs,runs)%in% c(0,2)))stop("Messed up left right pair")
+if(any(tapply(readCounts,paste(runs,pairs),function(x)all(x!=x[1]))))stop('Count disagreement')
+pairCounts<-tapply(readCounts,list(pairs,sprintf('run%d',runs)),'[[',1)
 
-write.csv(data.frame('sample'=pairs,'file'=basename(fastqs),'count'=readCounts),'counts.csv',row.names=FALSE)
+write.csv(pairCounts,'counts.csv')
 
 samples<-read.csv('sherrill-MixLauder_islandGut.csv',stringsAsFactors=FALSE)
 samples$readCounts<-pairCounts[samples$X.SampleID]

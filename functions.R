@@ -72,6 +72,8 @@ filterReads<-function(seqs,quals=NULL,minLength=0,maxLength=1e6,minQual=0,maxBad
 
 
 runOtuForming<-function(seqs,samples,outDir){
+  #save reads
+  write.fa(ave(samples,samples,FUN=function(x)paste(x,1:length(x))),seqs,sprintf('%s/seqs.fa.gz',outDir))
   #swarm
   tmp<-runSwarm(seqs,swarmBin='~/installs/swarm/swarm',swarmArgs='-f -t 32')
   otus<-tmp[['otus']]

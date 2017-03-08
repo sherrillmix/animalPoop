@@ -11,19 +11,24 @@ animalWeights<-c(
   'wild rat'=.4,
   'macaque'=6.5, #https://en.wikipedia.org/wiki/Rhesus_macaque
   'fish'=1,
-  #'breastfed human baby'=10, #pulling 10 out of butt might be better to use adult or exclude #using ~ non developed adult human average #http://www.biomedcentral.com/content/pdf/1471-2458-12-439.pdf
-  #'formula a human baby'=10,
-  #'formula b human baby'=10,
+  # 'breastfed human baby'=10, #pulling 10 out of butt might be better to use adult or exclude #using ~ non developed adult human average #http://www.biomedcentral.com/content/pdf/1471-2458-12-439.pdf
+  # 'formula a human baby'=10,
+  # 'formula b human baby'=10,
   'baby'=10,
-  'human'=60,
-  'HUMPBACK'=36000,
-  'FIN'=60000, #http://www.nmfs.noaa.gov/pr/species/mammals/cetaceans/finwhale.htm
-  'RIGHT'=55000
+  'human'=60
+  # taking out whales 
+  # 'HUMPBACK'=36000,
+  # 'FIN'=60000, #http://www.nmfs.noaa.gov/pr/species/mammals/cetaceans/finwhale.htm
+  # 'RIGHT'=55000
 )
 dir.create('work/data/bushman',showWarnings=FALSE)
 info<-info[!is.na(info$species),]
+#take out baby
 info<-info[!grepl('baby',info$species),]
+#take out mixed drosophila
 info<-info[!grepl('drosophila',info$species)|grepl('w1118',info$sample),]
+#take out whales (using in main cohort)
+info<-info[!grepl('HUMPBACK|FIN|RIGHT',info$species),]
 info<-info[,c('sample','species')]
 additional<-read.csv('data/bushman/raw/macaqueRat.csv',stringsAsFactors=FALSE)
 additional$species[grepl('wild.[rR]at',additional$sample)]<-'wild rat'
@@ -38,6 +43,9 @@ write.csv(info[,c('sample','name','species','weight')],'work/data/bushman/info.c
 seqs<-readFaDir('data/bushman/raw/','fna.gz$',assumeSingleLine=TRUE)
 seqs$sample<-sub('_[0-9].*','',seqs$name)
 
-allSeqs<-tapply(seqs$seq,seqs$sample,function(xx)filterReads(xx,minLength=250,maxLength=350))
+allSeqs<-tapply(seqs$seq,seqs$sample,function(xx)filterReads(xx,minLength=250,maxLength=500))
+if(any(!info$sample %in% names(allSeqs)))stop('Missing expected sample')
+allSeqs<-allSeqs[info$sample]
+
 
 runOtuForming(unlist(allSeqs),rep(names(allSeqs),sapply(allSeqs,length)),'work/data/bushman')

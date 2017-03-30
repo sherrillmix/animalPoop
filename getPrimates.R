@@ -11,7 +11,7 @@ weights<-c(
   "Blue-eyed black lemur"=1.8, #https://en.wikipedia.org/wiki/Blue-eyed_black_lemur
   "De Brazzas monkey"=5.5, #https://en.wikipedia.org/wiki/De_Brazza's_monkey
   "Western lowland gorilla"=125, #https://en.wikipedia.org/wiki/Western_lowland_gorilla
-  "Sumatran Orangutan=77" #https://en.wikipedia.org/wiki/Sumatran_orangutan
+  "Sumatran Orangutan"=77 #https://en.wikipedia.org/wiki/Sumatran_orangutan
 )
 info<-read.table('data/primates/map_final_analysis.txt',sep='\t',stringsAsFactors=FALSE,header=TRUE)
 info$weight<-weights[info$SpeciesCommonNameSpecific]

@@ -25,7 +25,9 @@ tmp<-textConnection('text','w')
 write.csv(samples[,origCols],tmp,row.names=FALSE)
 close(tmp)
 text[1]<-gsub('"','',text[1])
-writeLines(text,'sherrill-MixLauder_islandGut.csv')
+writeLines(text,'sherrill-MixLauder_islandGut_run1.csv')
+
+writeLines(samples[grep('Chimpanzee|Human|Macaque|Mandrill|Colobus|Gorilla|Bonobo|Mangabey|Primate',samples[,'Animal name']),'#SampleID'],'work/primates.txt')
 
 samples2<-read.csv('sherrill-MixLauder_islandGut2-APL4.csv',stringsAsFactors=FALSE,check.names=FALSE)
 samples2<-samples2[!is.na(samples2$sample_name)&samples2$sample_name!='',]
@@ -41,7 +43,7 @@ if(any(table(samples2[,'sample_name'])>1))stop('Duplicate sample ID')
 samples2$i1_sequence<-samples2$rBar
 samples2$barcode_sequence<-paste(samples2$i2_sequence,samples2$i1_sequence,sep='')
 
-write.csv(samples2[,origCols],'sherrill-MixLauder_islandGut2.csv',row.names=FALSE)
+write.csv(samples2[,origCols],'sherrill-MixLauder_islandGut_run2.csv',row.names=FALSE)
 
 
 

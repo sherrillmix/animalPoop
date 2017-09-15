@@ -85,15 +85,36 @@ seqs<-seqs[seqs$link %in% c(info$linkerF,info$linkerR),]
 seqs$forward<-seqs$link %in% info$linkerF
 seqs<-seqs[seqs$bar %in% c(info$barcodeF,info$barcodeR),]
 cbind(table(info$barcodeF,info$run),table(seqs$bar,seqs$file))
+rownames(info)<-paste(info$barcodeF,info$file)
+seqs$sample<-sprintf('%s%s',info[paste(seqs$bar,seqs$file),'sample'],ifelse(seqs$forward,'','_rev'))
 seqs<-seqs[paste(seqs$file,seqs$bar) %in% paste(info$file,info$barcodeF),]
 seqs$primer<-substring(seqs$seq,15,ifelse(seqs$forward,34,33))
 seqs<-seqs[seqs$primer %in% c(info$primerFSeq,info$primerRSeq),]
-#lots of reads end in N
-seqs$trim<-sub('N.*$','',substring(seqs$seq,ifelse(seqs$forward,34,33)+1))
-seqs<-seqs[nchar(seqs$trim)>200&nchar(seqs$trim<600),]
+#seqs$trim<-sub('N.*$','',substring(seqs$seq,ifelse(seqs$forward,34,33)+1))
+seqs$trim<-substring(seqs$seq,ifelse(seqs$forward,34,33)+1)
+#lots of reads end in trailing primer
+#trailingPrimers<-unique(unlist(expandAmbiguous(sprintf('%s%s',c('',revComp(c(info$totalF,info$totalR))),c('AGTCRTGGGAGCAAGGCACACAGGGGATAGG')))))
+#trailingPrimers<-unique(unlist(expandAmbiguous(sprintf('%s%s',c(revComp(c(info$totalF,info$totalR))),c('AGTCRTGGGAGCAAGGCACACAGGGGATAGG')))))
+trailingPrimers<-sprintf('%s%s',c(revComp(c(info$totalF,info$totalR))),c('AGTCRTGGGAGCAAGGCACACAGGGGATAGG'))
+#reverse forward and reverse for trailing primer
+names(trailingPrimers)<-sprintf('%s%s',c(info$sample,info$sample),rep(c('_rev',''),each=nrow(info)))
+primDist<-mcmapply(function(xx,yy)min(leven(xx,expandAmbiguous(yy)[[1]],substring1=TRUE,homoLimit=4)),seqs$trim,trailingPrimers[seqs$sample],mc.cores=20)
 
-rownames(info)<-paste(info$barcodeF,info$file)
-seqs$sample<-sprintf('%s%s',info[paste(seqs$bar,seqs$file),'sample'],ifelse(seqs$forward,'','_rev'))
+#filter to only reads containing trailing primer
+seqs<-seqs[primDist<16,]
+#trim off trailing primer
+seqs$trim2<-mcmapply(function(seq,prim){
+  al<-levenAlign(prim,seq,substring2=TRUE)
+  start<-regexpr('[^-]',al[[2]])
+  out<-substring(seq,1,start-1)
+  return(out)
+},seqs$trim,trailingPrimers[seqs$sample],mc.cores=20)
+
+#lots of reads end in N (although probably trimmed above)
+#seqs$trim<-sub('N.*$','',seqs$trim2)
+
+seqs<-seqs[nchar(seqs$trim)>250&nchar(seqs$trim2<350)&!grepl('N',seqs$trim2),]
+
 
 
 dir.create('work/data/bug',showWarnings=FALSE)

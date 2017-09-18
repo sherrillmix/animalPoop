@@ -103,7 +103,7 @@ primDist<-mcmapply(function(xx,yy)min(leven(xx,expandAmbiguous(yy)[[1]],substrin
 #filter to only reads containing trailing primer
 seqs<-seqs[primDist<16,]
 #trim off trailing primer
-seqs$trim2<-mcmapply(function(seq,prim){
+seqs$trim<-mcmapply(function(seq,prim){
   al<-levenAlign(prim,seq,substring2=TRUE)
   start<-regexpr('[^-]',al[[2]])
   out<-substring(seq,1,start-1)
@@ -113,7 +113,7 @@ seqs$trim2<-mcmapply(function(seq,prim){
 #lots of reads end in N (although probably trimmed above)
 #seqs$trim<-sub('N.*$','',seqs$trim2)
 
-seqs<-seqs[nchar(seqs$trim)>250&nchar(seqs$trim2<350)&!grepl('N',seqs$trim2),]
+seqs<-seqs[nchar(seqs$trim)>250&nchar(seqs$trim<350)&!grepl('N',seqs$trim),]
 
 
 
